@@ -1,0 +1,106 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  googleId      String?   @unique
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  accounts      AdAccount[]
+  sessions      Session[]
+
+  @@map("users")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  accessToken  String   @db.Text
+  refreshToken String?  @db.Text
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model AdAccount {
+  id                String    @id @default(cuid())
+  userId            String
+  customerId        String    // Google Ads customer ID
+  accountName       String
+  currency          String    @default("USD")
+  timezone          String?
+  isActive          Boolean   @default(true)
+  lastSyncedAt      DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  campaigns         Campaign[]
+
+  @@unique([userId, customerId])
+  @@map("ad_accounts")
+}
+
+model Campaign {
+  id                String    @id @default(cuid())
+  adAccountId       String
+  campaignId        String    // Google Ads campaign ID
+  campaignName      String
+  status            String    // ENABLED, PAUSED, REMOVED
+  biddingStrategy   String?
+  budget            Float?
+  targetCpa         Float?
+  targetRoas        Float?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  adAccount         AdAccount @relation(fields: [adAccountId], references: [id], onDelete: Cascade)
+  metrics           CampaignMetrics[]
+
+  @@unique([adAccountId, campaignId])
+  @@map("campaigns")
+}
+
+model CampaignMetrics {
+  id                String    @id @default(cuid())
+  campaignId        String
+  date              DateTime  @db.Date
+  impressions       Int       @default(0)
+  clicks            Int       @default(0)
+  cost              Float     @default(0)
+  conversions       Float     @default(0)
+  conversionValue   Float     @default(0)
+  ctr               Float     @default(0)  // Click-through rate
+  averageCpc        Float     @default(0)  // Average cost per click
+  costPerConversion Float     @default(0)  // CPA
+  roas              Float     @default(0)  // Return on ad spend
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  campaign          Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, date])
+  @@index([campaignId, date])
+  @@map("campaign_metrics")
+}

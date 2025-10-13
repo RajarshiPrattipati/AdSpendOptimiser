@@ -1,0 +1,185 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { format, subDays } from 'date-fns';
+import MetricsCards from '@/components/dashboard/MetricsCards';
+import CampaignTable from '@/components/dashboard/CampaignTable';
+import AccountSwitcher from '@/components/dashboard/AccountSwitcher';
+import DateRangeSelector from '@/components/dashboard/DateRangeSelector';
+
+interface DashboardData {
+  campaigns: any[];
+  summary: any;
+  dateRange: {
+    startDate: string;
+    endDate: string;
+  };
+}
+
+export default function DashboardPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [accountId, setAccountId] = useState<string | null>(null);
+  const [startDate, setStartDate] = useState(format(subDays(new Date(), 30), 'yyyy-MM-dd'));
+  const [endDate, setEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+
+  useEffect(() => {
+    const storedToken = localStorage.getItem('auth_token');
+    if (!storedToken) {
+      router.push('/');
+      return;
+    }
+    setToken(storedToken);
+
+    const accountIdParam = searchParams.get('accountId');
+    if (accountIdParam) {
+      setAccountId(accountIdParam);
+    }
+  }, [searchParams, router]);
+
+  useEffect(() => {
+    if (token && accountId) {
+      fetchDashboardData();
+    }
+  }, [token, accountId, startDate, endDate]);
+
+  const fetchDashboardData = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const params = new URLSearchParams({
+        accountId: accountId!,
+        startDate,
+        endDate,
+      });
+
+      const response = await fetch(`/api/campaigns?${params}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Failed to fetch dashboard data');
+      }
+
+      setData(result.data);
+    } catch (err) {
+      console.error('Error fetching dashboard data:', err);
+      setError('Failed to load dashboard data. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAccountChange = (newAccountId: string) => {
+    setAccountId(newAccountId);
+    router.push(`/dashboard?accountId=${newAccountId}`);
+  };
+
+  const handleDateRangeChange = (start: string, end: string) => {
+    setStartDate(start);
+    setEndDate(end);
+  };
+
+  const handleRefresh = () => {
+    if (token && accountId) {
+      fetchDashboardData();
+    }
+  };
+
+  if (!token || !accountId) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center gap-8">
+              <h1 className="text-2xl font-bold text-gray-900">ADSO</h1>
+              <AccountSwitcher
+                currentAccountId={accountId}
+                onAccountChange={handleAccountChange}
+                token={token}
+              />
+            </div>
+            <button
+              onClick={() => {
+                localStorage.removeItem('auth_token');
+                router.push('/');
+              }}
+              className="text-sm text-gray-600 hover:text-gray-900"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Controls */}
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-semibold text-gray-900">Campaign Performance</h2>
+          <div className="flex items-center gap-4">
+            <DateRangeSelector
+              startDate={startDate}
+              endDate={endDate}
+              onChange={handleDateRangeChange}
+            />
+            <button
+              onClick={handleRefresh}
+              disabled={isLoading}
+              className="px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoading ? 'Refreshing...' : 'Refresh'}
+            </button>
+          </div>
+        </div>
+
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-sm text-red-600">{error}</p>
+          </div>
+        )}
+
+        {isLoading ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="text-center">
+              <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4" />
+              <p className="text-gray-600">Loading campaign data...</p>
+            </div>
+          </div>
+        ) : data ? (
+          <>
+            {/* Metrics Cards */}
+            <MetricsCards summary={data.summary} />
+
+            {/* Campaign Table */}
+            <div className="mt-8">
+              <CampaignTable campaigns={data.campaigns} />
+            </div>
+          </>
+        ) : null}
+      </div>
+    </div>
+  );
+}
