@@ -17,6 +17,7 @@
     "db:init": "npm run db:generate && npm run db:push"
   },
   "dependencies": {
+    "@netlify/plugin-nextjs": "^5.13.5",
     "@prisma/client": "^6.17.1",
     "bcryptjs": "^2.4.3",
     "clsx": "^2.1.1",
