@@ -4,6 +4,8 @@ import { GoogleAdsService } from '@/lib/google-ads';
 import { prisma } from '@/lib/prisma';
 import { format, subDays } from 'date-fns';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/campaigns
  * Fetch campaign data for a specific ad account

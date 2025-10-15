@@ -4,6 +4,8 @@ import { GoogleAdsService } from '@/lib/google-ads';
 import { KeywordAnalyzer } from '@/lib/keyword-analyzer';
 import { prisma } from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/keywords
  * Fetch keyword performance analysis with pause/scale recommendations

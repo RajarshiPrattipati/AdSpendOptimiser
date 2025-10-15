@@ -4,6 +4,8 @@ import { GoogleAdsService } from '@/lib/google-ads';
 import { SearchTermAnalyzer } from '@/lib/search-term-analyzer';
 import { prisma } from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/search-terms
  * Fetch search term report with negative keyword recommendations

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { google } from 'googleapis';
 import { findOrCreateUser, storeOAuthSession, generateToken } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic';
+
 const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
@@ -18,15 +20,17 @@ export async function GET(request: NextRequest) {
     const code = searchParams.get('code');
     const error = searchParams.get('error');
 
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
+
     if (error) {
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL}/auth/error?error=${error}`
+        `${baseUrl}/auth/error?error=${error}`
       );
     }
 
     if (!code) {
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL}/auth/error?error=missing_code`
+        `${baseUrl}/auth/error?error=missing_code`
       );
     }
 
@@ -68,14 +72,16 @@ export async function GET(request: NextRequest) {
     });
 
     // Redirect to account selection page with token
-    const redirectUrl = new URL('/auth/accounts', process.env.NEXT_PUBLIC_APP_URL);
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
+    const redirectUrl = new URL('/auth/accounts', baseUrl);
     redirectUrl.searchParams.set('token', jwtToken);
 
     return NextResponse.redirect(redirectUrl.toString());
   } catch (error) {
     console.error('OAuth callback error:', error);
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
     return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_APP_URL}/auth/error?error=authentication_failed`
+      `${baseUrl}/auth/error?error=authentication_failed`
     );
   }
 }
