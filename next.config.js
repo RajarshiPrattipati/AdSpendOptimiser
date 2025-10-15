@@ -13,13 +13,6 @@ const nextConfig = {
   },
   // Skip trailing slash
   skipTrailingSlashRedirect: true,
-  // Skip prerendering error pages to avoid Pages Router conflicts in App Router
-  // App Router has its own error.tsx and global-error.tsx
-  generateBuildId: async () => {
-    return 'build-' + Date.now()
-  },
-  // Explicitly use standalone output for better Netlify compatibility
-  output: 'standalone',
 }
 
 module.exports = nextConfig
