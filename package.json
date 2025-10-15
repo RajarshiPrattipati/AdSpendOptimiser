@@ -17,7 +17,7 @@
     "db:init": "npm run db:generate && npm run db:push"
   },
   "dependencies": {
-    "@prisma/client": "^5.15.0",
+    "@prisma/client": "^6.17.1",
     "bcryptjs": "^2.4.3",
     "clsx": "^2.1.1",
     "date-fns": "^3.6.0",
@@ -27,7 +27,7 @@
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.378.0",
     "next": "^14.2.0",
-    "prisma": "^5.15.0",
+    "prisma": "^6.17.1",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
     "recharts": "^2.12.0",
