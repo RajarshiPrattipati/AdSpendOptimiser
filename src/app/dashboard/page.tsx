@@ -1,7 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+
+export const dynamic = 'force-dynamic';
 import { format, subDays } from 'date-fns';
 import MetricsCards from '@/components/dashboard/MetricsCards';
 import CampaignTable from '@/components/dashboard/CampaignTable';

@@ -228,7 +228,7 @@ export class GoogleAdsService {
           accountName: clientData.descriptive_name || 'Unnamed Account',
           currency: clientData.currency_code || 'USD',
           timezone: clientData.time_zone || 'UTC',
-          isManagerAccount: clientData.manager === true,
+          isManagerAccount: Boolean(clientData.manager),
           canManageClients: false,
         };
 
@@ -276,7 +276,7 @@ export class GoogleAdsService {
         return null;
       }
 
-      const isManager = customerData.manager === true;
+      const isManager = Boolean(customerData.manager);
 
       return {
         customerId: customerData.id?.toString() || customerId,

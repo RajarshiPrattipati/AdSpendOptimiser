@@ -194,9 +194,9 @@ export default function AccountsPage() {
                     {/* Manager Account Header */}
                     {group.manager && (
                       <div
-                        onClick={() => toggleAccount(group.manager.customerId)}
+                        onClick={() => group.manager && toggleAccount(group.manager.customerId)}
                         className={`p-4 border-2 rounded-lg cursor-pointer transition-all bg-gradient-to-r from-purple-50 to-blue-50 ${
-                          selectedAccounts.has(group.manager.customerId)
+                          group.manager && selectedAccounts.has(group.manager.customerId)
                             ? 'border-purple-500'
                             : 'border-purple-200 hover:border-purple-300'
                         }`}
@@ -206,12 +206,12 @@ export default function AccountsPage() {
                             <div className="mt-1">
                               <div
                                 className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
-                                  selectedAccounts.has(group.manager.customerId)
+                                  group.manager && selectedAccounts.has(group.manager.customerId)
                                     ? 'bg-purple-600 border-purple-600'
                                     : 'border-gray-300'
                                 }`}
                               >
-                                {selectedAccounts.has(group.manager.customerId) && (
+                                {group.manager && selectedAccounts.has(group.manager.customerId) && (
                                   <svg
                                     className="w-3 h-3 text-white"
                                     fill="none"
