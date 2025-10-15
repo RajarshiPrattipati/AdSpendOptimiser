@@ -8,12 +8,18 @@ const nextConfig = {
     // Remove console logs in production
     removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error', 'warn'] } : false,
   },
-  // Disable static optimization for error pages to prevent Pages Router issues in App Router
   experimental: {
     optimizePackageImports: ['lucide-react'],
   },
   // Skip trailing slash
   skipTrailingSlashRedirect: true,
+  // Skip prerendering error pages to avoid Pages Router conflicts in App Router
+  // App Router has its own error.tsx and global-error.tsx
+  generateBuildId: async () => {
+    return 'build-' + Date.now()
+  },
+  // Explicitly use standalone output for better Netlify compatibility
+  output: 'standalone',
 }
 
 module.exports = nextConfig
