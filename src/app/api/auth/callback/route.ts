@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { google } from 'googleapis';
-import { findOrCreateUser, storeOAuthSession, generateToken } from '@/lib/auth';
+import { NextRequest, NextResponse } from "next/server";
+import { google } from "googleapis";
+import { findOrCreateUser, storeOAuthSession, generateToken } from "@/lib/auth";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
@@ -17,21 +17,17 @@ const oauth2Client = new google.auth.OAuth2(
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    const code = searchParams.get('code');
-    const error = searchParams.get('error');
+    const code = searchParams.get("code");
+    const error = searchParams.get("error");
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
 
     if (error) {
-      return NextResponse.redirect(
-        `${baseUrl}/auth/error?error=${error}`
-      );
+      return NextResponse.redirect(`${baseUrl}/auth/error?error=${error}`);
     }
 
     if (!code) {
-      return NextResponse.redirect(
-        `${baseUrl}/auth/error?error=missing_code`
-      );
+      return NextResponse.redirect(`${baseUrl}/auth/error?error=missing_code`);
     }
 
     // Exchange authorization code for tokens
@@ -39,15 +35,15 @@ export async function GET(request: NextRequest) {
     oauth2Client.setCredentials(tokens);
 
     if (!tokens.access_token) {
-      throw new Error('No access token received');
+      throw new Error("No access token received");
     }
 
     // Get user info from Google
-    const oauth2 = google.oauth2({ version: 'v2', auth: oauth2Client });
+    const oauth2 = google.oauth2({ version: "v2", auth: oauth2Client });
     const userInfo = await oauth2.userinfo.get();
 
     if (!userInfo.data.email || !userInfo.data.id) {
-      throw new Error('Invalid user info received from Google');
+      throw new Error("Invalid user info received from Google");
     }
 
     // Find or create user in database
@@ -62,7 +58,9 @@ export async function GET(request: NextRequest) {
       user.id,
       tokens.access_token,
       tokens.refresh_token || null,
-      tokens.expiry_date ? Math.floor((tokens.expiry_date - Date.now()) / 1000) : 3600
+      tokens.expiry_date
+        ? Math.floor((tokens.expiry_date - Date.now()) / 1000)
+        : 3600
     );
 
     // Generate JWT token for app authentication
@@ -72,16 +70,16 @@ export async function GET(request: NextRequest) {
     });
 
     // Redirect to account selection page with token
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
-    const redirectUrl = new URL('/auth/accounts', baseUrl);
-    redirectUrl.searchParams.set('token', jwtToken);
+    const baseUrl2 = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
+    const redirectUrl = new URL("/auth/accounts", baseUrl2);
+    redirectUrl.searchParams.set("token", jwtToken);
 
     return NextResponse.redirect(redirectUrl.toString());
   } catch (error) {
-    console.error('OAuth callback error:', error);
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
+    console.error("OAuth callback error:", error);
+    const baseUrl2 = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
     return NextResponse.redirect(
-      `${baseUrl}/auth/error?error=authentication_failed`
+      `${baseUrl2}/auth/error?error=authentication_failed`
     );
   }
 }
