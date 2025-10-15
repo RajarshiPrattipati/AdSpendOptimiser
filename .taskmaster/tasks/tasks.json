@@ -1,0 +1,733 @@
+{
+  "master": {
+    "tasks": [
+      {
+        "id": 1,
+        "title": "Implement Automated Recommendations Engine",
+        "description": "Build AI-powered system that analyzes campaign performance and suggests optimizations with expected impact estimation",
+        "details": "Create a recommendations service that analyzes historical campaign data using statistical significance testing and machine learning algorithms. Implement recommendation categories: budget reallocation, keyword optimization, bid adjustments, and ad creative improvements. Each recommendation should include impact estimation (e.g., '15% CPA reduction expected'), explanation reasoning, and one-click implementation capability. Requires minimum 30 days of historical data for accurate recommendations. Use existing CampaignMetrics model for data analysis and create new Recommendation model for storing suggestions.",
+        "testStrategy": "Unit tests for recommendation algorithms, integration tests with historical campaign data, A/B testing for recommendation accuracy, and validation against actual implementation results",
+        "priority": "high",
+        "dependencies": [],
+        "status": "in-progress",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create Recommendation Model and Database Schema",
+            "description": "Design and implement the database schema for storing recommendation data including models for recommendations, categories, and impact estimations",
+            "dependencies": [],
+            "details": "Create Recommendation model with fields for recommendation type, target campaign/keyword/ad, suggested changes, impact estimation, confidence score, reasoning explanation, status, and timestamps. Include recommendation categories enum and create database migrations. Establish relationships with existing CampaignMetrics model.\n<info added on 2025-10-13T11:24:34.392Z>\nIMPLEMENTATION COMPLETED: Successfully implemented comprehensive Recommendation model and database schema with RecommendationType enum (8 types including BUDGET_REALLOCATION, KEYWORD_OPTIMIZATION, BID_ADJUSTMENT, AD_CREATIVE, PAUSE_CAMPAIGN, PAUSE_KEYWORD, ADD_NEGATIVE_KEYWORD, BIDDING_STRATEGY_CHANGE), RecommendationStatus enum (5 statuses: PENDING, APPROVED, REJECTED, IMPLEMENTED, DISMISSED), and full Recommendation model with core targeting fields (adAccountId, campaignId, keywordId, adId), recommendation details (type, status, title, description, reasoning), impact estimation fields (expectedImpact, impactMetric, impactValue, confidenceScore), implementation tracking (implementedAt, implementedBy, rollbackData), priority and scheduling (priority, validUntil), and proper timestamps. Added relationships to AdAccount and Campaign models, created optimized database indexes for query performance, and successfully generated Prisma Client. Schema ready for migration when database accessible.\n</info added on 2025-10-13T11:24:34.392Z>",
+            "status": "done",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Build Statistical Analysis Service for Campaign Performance",
+            "description": "Implement statistical significance testing and performance analysis algorithms to identify optimization opportunities from historical data",
+            "dependencies": [
+              "1.1"
+            ],
+            "details": "Create service to analyze 30+ days of historical campaign data using statistical significance testing, trend analysis, and performance benchmarking. Implement data validation, outlier detection, and confidence interval calculations. Build foundation for identifying underperforming campaigns and opportunities.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Implement ML Algorithms for Optimization Suggestions",
+            "description": "Develop machine learning models to generate intelligent optimization recommendations based on campaign patterns and performance data",
+            "dependencies": [
+              "1.2"
+            ],
+            "details": "Build ML algorithms for pattern recognition, performance prediction, and optimization suggestion generation. Implement regression models for CPA prediction, clustering for campaign segmentation, and decision trees for optimization rules. Include model training pipeline and performance validation.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Create Recommendation Categories System",
+            "description": "Implement specific recommendation engines for budget reallocation, keyword optimization, bid adjustments, and ad creative improvements",
+            "dependencies": [
+              "1.3"
+            ],
+            "details": "Build category-specific recommendation engines: budget reallocation based on performance and spend patterns, keyword optimization for negative keywords and bid adjustments, automated bid management recommendations, and ad creative performance analysis with A/B testing suggestions.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 5,
+            "title": "Build Impact Estimation Algorithms",
+            "description": "Develop algorithms to calculate and display expected impact of recommendations with confidence intervals and risk assessment",
+            "dependencies": [
+              "1.4"
+            ],
+            "details": "Create impact estimation system that calculates expected CPA reduction, conversion rate improvement, and ROI impact. Include confidence intervals, risk assessment, and historical validation. Implement algorithms for different recommendation types with appropriate statistical backing.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 6,
+            "title": "Develop One-Click Implementation System",
+            "description": "Build automated implementation system that can apply recommendations directly to Google Ads campaigns with user approval",
+            "dependencies": [
+              "1.5"
+            ],
+            "details": "Create implementation engine that integrates with Google Ads API to apply recommendations automatically. Include safety checks, rollback capabilities, approval workflows, and implementation tracking. Build queuing system for batch updates and error handling for failed implementations.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 7,
+            "title": "Create Recommendation API Endpoints",
+            "description": "Build REST API endpoints for retrieving, filtering, approving, and managing recommendations with proper authentication and rate limiting",
+            "dependencies": [
+              "1.6"
+            ],
+            "details": "Implement API endpoints for fetching recommendations by campaign/account, filtering by category and impact level, approving/rejecting recommendations, and tracking implementation status. Include pagination, caching, authentication middleware, and comprehensive error handling.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 8,
+            "title": "Build Frontend Components for Recommendations Management",
+            "description": "Create user interface components for displaying recommendations, impact visualizations, and one-click implementation controls",
+            "dependencies": [
+              "1.7"
+            ],
+            "details": "Build React components for recommendations dashboard with filtering, sorting, and categorization. Include impact visualization charts, recommendation cards with detailed explanations, approval/implementation buttons, and progress tracking. Implement real-time updates and notification integration.",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Build Budget Optimizer Tool",
+        "description": "Create intelligent budget allocation system with visual representation and simulation capabilities",
+        "details": "Develop a budget optimization engine that analyzes campaign ROI and suggests optimal budget distribution. Include visual budget allocation charts using Recharts library (already installed), budget constraint settings (min/max per campaign), simulation mode for preview before implementation, and automatic reallocation based on performance thresholds. Implement budget forecasting algorithms and integration with Google Ads API for budget updates. Create new BudgetOptimization model for storing optimization rules and history.",
+        "testStrategy": "Test budget allocation algorithms with various scenarios, validate Google Ads API budget updates, simulate budget changes and verify expected outcomes, and test constraint enforcement",
+        "priority": "high",
+        "dependencies": [
+          1
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create BudgetOptimization Model and Database Schema",
+            "description": "Design and implement the BudgetOptimization model with required fields for storing optimization rules, constraints, and historical data",
+            "dependencies": [],
+            "details": "Create BudgetOptimization model with fields for optimization rules, budget constraints (min/max per campaign), performance thresholds, reallocation history, and forecasting parameters. Include relationships to Campaign and User models. Set up database migrations and establish proper indexing for performance queries.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Implement Budget Allocation Algorithms and ROI Analysis",
+            "description": "Build core optimization algorithms that analyze campaign ROI and calculate optimal budget distribution",
+            "dependencies": [
+              "2.1"
+            ],
+            "details": "Develop mathematical algorithms for budget optimization based on ROI analysis, performance metrics, and historical data. Implement constraint satisfaction for min/max budget limits per campaign. Create functions for calculating expected performance improvements and budget reallocation recommendations.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Build Budget Forecasting Engine",
+            "description": "Create predictive algorithms for budget forecasting and performance projection",
+            "dependencies": [
+              "2.2"
+            ],
+            "details": "Implement forecasting algorithms that predict future campaign performance based on historical trends and budget changes. Include seasonal adjustments, trend analysis, and confidence intervals for forecasts. Create methods for projecting ROI improvements from proposed budget changes.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Create Visual Budget Charts Using Recharts",
+            "description": "Build interactive budget visualization components using the existing Recharts library",
+            "dependencies": [
+              "2.3"
+            ],
+            "details": "Develop React components for budget allocation charts, ROI comparison graphs, and forecasting visualizations using Recharts. Include pie charts for budget distribution, line charts for performance trends, and bar charts for campaign comparisons. Implement interactive tooltips and drill-down capabilities.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 5,
+            "title": "Implement Google Ads API Budget Update Integration",
+            "description": "Build API integration for automatically updating campaign budgets based on optimization recommendations",
+            "dependencies": [
+              "2.2"
+            ],
+            "details": "Integrate with Google Ads API to implement budget changes programmatically. Include error handling, rate limiting, and rollback capabilities. Create functions for batch budget updates and real-time synchronization with Google Ads platform. Implement audit logging for all API operations.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 6,
+            "title": "Build Frontend Interface with Simulation and Constraint Settings",
+            "description": "Create user interface for budget optimization with simulation mode and constraint configuration",
+            "dependencies": [
+              "2.4",
+              "2.5"
+            ],
+            "details": "Develop React frontend components for budget optimizer interface including simulation mode for previewing changes before implementation, constraint settings forms for min/max budgets per campaign, and automatic reallocation configuration. Include approval workflow for budget changes and real-time performance monitoring dashboard.",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Develop Keyword Performance Analyzer",
+        "description": "Build comprehensive keyword analysis tool with negative keyword suggestions and duplicate detection",
+        "details": "Create keyword analyzer that identifies underperforming keywords and suggests actions. Implement search term report analysis, automatic negative keyword suggestions based on non-converting search terms, duplicate keyword detection across campaigns, and performance-based bid adjustment recommendations. Create Keyword and SearchTerm models to store keyword-level data. Integrate with Google Ads API to fetch keyword performance data and implement automated negative keyword list management.",
+        "testStrategy": "Test keyword performance calculations, validate negative keyword suggestions against conversion data, test duplicate detection algorithms, and verify API integration for keyword management",
+        "priority": "high",
+        "dependencies": [],
+        "status": "in-progress",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create Keyword and SearchTerm database models and schema",
+            "description": "Design and implement database models for storing keyword performance data and search term reports",
+            "dependencies": [],
+            "details": "Create Keyword model with fields for keyword text, match type, campaign association, performance metrics (impressions, clicks, conversions, CPC, CTR), and status. Create SearchTerm model for storing search query data, associated keywords, and conversion performance. Set up database migrations and establish proper relationships between models and existing Campaign/AdGroup models.",
+            "status": "done",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Extend Google Ads API service for keyword data retrieval",
+            "description": "Enhance existing Google Ads API integration to fetch keyword performance and search term report data",
+            "dependencies": [
+              "3.1"
+            ],
+            "details": "Extend the existing Google Ads API service to include keyword performance report queries, search term report data fetching, and keyword management operations. Implement data transformation from API response to database models. Add error handling and rate limiting for keyword-specific API calls. Include methods for fetching negative keyword lists and managing keyword additions/removals.",
+            "status": "done",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Implement keyword performance analysis algorithms",
+            "description": "Build core algorithms to analyze keyword performance and identify optimization opportunities",
+            "dependencies": [
+              "3.1",
+              "3.2"
+            ],
+            "details": "Develop algorithms to calculate keyword performance scores based on CTR, conversion rate, CPC efficiency, and ROI metrics. Implement underperforming keyword identification logic using statistical thresholds and campaign benchmarks. Create performance comparison algorithms that evaluate keywords against campaign and account averages. Include trend analysis for performance changes over time.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Build negative keyword suggestion engine",
+            "description": "Create intelligent system for suggesting negative keywords based on search term performance",
+            "dependencies": [
+              "3.2",
+              "3.3"
+            ],
+            "details": "Implement algorithm that analyzes search term reports to identify non-converting or poorly performing queries. Build suggestion logic that recommends negative keywords at appropriate levels (campaign, ad group, or account). Create automated negative keyword list management with approval workflows. Include confidence scoring for suggestions and batch processing capabilities for large accounts.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 5,
+            "title": "Develop duplicate keyword detection system",
+            "description": "Build system to identify and resolve duplicate keywords across campaigns and ad groups",
+            "dependencies": [
+              "3.1",
+              "3.3"
+            ],
+            "details": "Create algorithms to detect exact, phrase, and broad match keyword overlaps across campaigns and ad groups. Implement conflict resolution recommendations based on performance data and campaign structure. Build deduplication workflow that suggests keyword consolidation or removal strategies. Include cross-campaign keyword cannibalization analysis and performance impact assessment.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 6,
+            "title": "Create frontend interface for keyword management and analysis",
+            "description": "Build user interface for keyword performance analysis, negative keyword management, and duplicate resolution",
+            "dependencies": [
+              "3.3",
+              "3.4",
+              "3.5"
+            ],
+            "details": "Design and implement React components for keyword performance dashboard with sortable tables and filtering options. Create negative keyword suggestion interface with bulk approval/rejection capabilities. Build duplicate keyword resolution workflow with visual conflict identification. Include keyword performance charts using existing Recharts library, export functionality for keyword data, and integration with the overall dashboard navigation.",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Create Automated Rules Engine",
+        "description": "Build flexible rule creation system with templates, execution scheduling, and audit trail",
+        "details": "Implement rule builder with condition and action framework supporting performance metrics, budget thresholds, and time-based triggers. Create 15+ pre-built rule templates for common optimization scenarios. Build rule execution engine that runs hourly with comprehensive logging and rollback capability. Include rule categories: budget protection, performance optimization, and scheduling. Create Rule, RuleExecution, and RuleTemplate models. Implement email notifications for rule executions and approval workflows for agency accounts.",
+        "testStrategy": "Test rule condition evaluation logic, validate rule execution scheduling, test rollback functionality, and verify email notification system",
+        "priority": "medium",
+        "dependencies": [
+          2,
+          3
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create Rule, RuleExecution, and RuleTemplate models",
+            "description": "Design and implement the core database models for the rules engine including relationships and validation",
+            "dependencies": [],
+            "details": "Create Rule model with fields for name, description, conditions, actions, category, status, and timestamps. Create RuleExecution model to track execution history with results, logs, and rollback data. Create RuleTemplate model for pre-built rule configurations. Include proper indexing, validation, and relationships between models.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Build rule condition and action framework",
+            "description": "Implement flexible condition evaluation system and action execution framework",
+            "dependencies": [
+              "4.1"
+            ],
+            "details": "Create condition evaluation engine supporting performance metrics, budget thresholds, and time-based triggers. Build action framework for campaign modifications, notifications, and budget adjustments. Implement condition operators (equals, greater than, less than, between) and compound conditions with AND/OR logic.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Implement rule execution engine with scheduling",
+            "description": "Build scheduled execution system that runs rules hourly with comprehensive logging",
+            "dependencies": [
+              "4.1",
+              "4.2"
+            ],
+            "details": "Create cron job system for hourly rule execution. Implement execution queue management, parallel processing for multiple rules, and execution result logging. Add execution status tracking (pending, running, completed, failed) and performance monitoring for execution times.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Create 15+ pre-built rule templates",
+            "description": "Design and implement comprehensive set of rule templates for common optimization scenarios",
+            "dependencies": [
+              "4.2"
+            ],
+            "details": "Create rule templates for budget protection (pause campaigns exceeding budget), performance optimization (increase bids for high-converting keywords), and scheduling (pause ads during off-hours). Include templates for CPA threshold alerts, impression share optimization, and keyword performance monitoring. Organize templates by category with clear descriptions and use cases.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 5,
+            "title": "Build rollback and audit logging system",
+            "description": "Implement comprehensive logging and rollback functionality for rule executions",
+            "dependencies": [
+              "4.3"
+            ],
+            "details": "Create detailed audit trail capturing all rule executions, changes made, and system state before/after. Implement rollback functionality to reverse rule actions when needed. Add audit log search and filtering capabilities. Store rollback data with sufficient detail to restore previous campaign states.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 6,
+            "title": "Implement email notification system",
+            "description": "Build email notification system for rule executions and approval workflows",
+            "dependencies": [
+              "4.3"
+            ],
+            "details": "Create email templates for rule execution notifications, failure alerts, and approval requests. Implement notification preferences per user and rule. Add approval workflow emails for agency accounts requiring client approval before rule execution. Include execution summaries and links to detailed logs in notifications.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 7,
+            "title": "Build frontend rule builder interface with drag-and-drop functionality",
+            "description": "Create intuitive drag-and-drop interface for building and managing rules",
+            "dependencies": [
+              "4.1",
+              "4.2",
+              "4.4"
+            ],
+            "details": "Build React components for rule builder with drag-and-drop condition and action blocks. Implement rule template selection interface, visual rule flow representation, and rule testing/preview functionality. Add rule management dashboard showing active rules, execution history, and performance metrics. Include rule editing, cloning, and deletion capabilities.",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Implement Advanced Analytics and Reporting",
+        "description": "Build custom report builder with scheduled delivery and ROI calculator",
+        "details": "Create drag-and-drop report builder with selectable metrics and dimensions, multiple visualization types using existing Recharts library, and export functionality (PDF/CSV/Excel). Implement scheduled report delivery system with email automation and white-label options for agencies. Build comprehensive ROI calculator that accounts for product margins, lifetime value, and operational costs. Create Report, ReportTemplate, and ScheduledReport models. Include industry benchmarking with anonymous aggregated data comparison.",
+        "testStrategy": "Test report generation with various metric combinations, validate scheduled email delivery, test ROI calculation accuracy, and verify export functionality",
+        "priority": "medium",
+        "dependencies": [],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create Report, ReportTemplate, and ScheduledReport Models",
+            "description": "Design and implement database models for reports, templates, and scheduled reporting functionality",
+            "dependencies": [],
+            "details": "Create Report model with fields for report configuration, metrics, dimensions, and visualization settings. Implement ReportTemplate model for saving and reusing report configurations. Build ScheduledReport model with scheduling options, delivery preferences, and execution tracking. Include proper relationships between models and validation logic.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Build Drag-and-Drop Report Builder with Metric Selection",
+            "description": "Implement interactive report builder interface with metric and dimension selection capabilities",
+            "dependencies": [
+              "5.1"
+            ],
+            "details": "Create drag-and-drop interface for building custom reports with selectable metrics and dimensions. Implement multiple visualization types using existing Recharts library (charts, tables, graphs). Build metric configuration panels, dimension grouping options, and real-time preview functionality. Include template saving and loading capabilities.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Implement Export Functionality (PDF/CSV/Excel)",
+            "description": "Build report export system supporting multiple file formats with proper formatting",
+            "dependencies": [
+              "5.2"
+            ],
+            "details": "Implement export functionality for PDF, CSV, and Excel formats. Ensure proper formatting, charts inclusion in PDF exports, and data integrity across all formats. Add export options for custom date ranges, filtered data, and branded reports with white-label support for agencies. Include export history and download management.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Create Scheduled Email Delivery System",
+            "description": "Build automated report delivery system with email scheduling and white-label options",
+            "dependencies": [
+              "5.1",
+              "5.3"
+            ],
+            "details": "Implement scheduled report delivery system with flexible scheduling options (daily, weekly, monthly). Build email automation using existing infrastructure with white-label customization for agencies. Include recipient management, delivery tracking, and failure handling. Add email templates and branding customization options.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 5,
+            "title": "Build ROI Calculator with Advanced Business Logic and Industry Benchmarking",
+            "description": "Implement comprehensive ROI calculation system with industry comparison and benchmarking features",
+            "dependencies": [
+              "5.1"
+            ],
+            "details": "Build ROI calculator accounting for product margins, customer lifetime value, and operational costs. Implement advanced business logic for accurate ROI calculations across different business models. Add industry benchmarking with anonymous aggregated data comparison. Include ROI trend analysis, forecasting capabilities, and integration with report builder for ROI-focused reports.",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Enhance Account Management and Multi-User Support",
+        "description": "Implement team collaboration features, role-based access control, and agency-specific functionality",
+        "details": "Build team management system with role-based access control (Admin, Editor, Viewer), per-account permission assignment, and user invitation workflow. Implement multi-account aggregation for agencies with consolidated dashboards and client account grouping. Add approval workflows requiring client approval before implementing changes. Create TeamMember, Permission, and ApprovalWorkflow models. Extend existing User model with team relationships and roles.",
+        "testStrategy": "Test permission enforcement across different user roles, validate team invitation workflow, test approval workflow functionality, and verify multi-account data aggregation",
+        "priority": "medium",
+        "dependencies": [],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create TeamMember, Permission, and ApprovalWorkflow models",
+            "description": "Design and implement database models for team collaboration including TeamMember for user-team relationships, Permission for role-based access control, and ApprovalWorkflow for client approval processes",
+            "dependencies": [],
+            "details": "Create Prisma schema definitions for TeamMember (userId, teamId, role, joinedAt), Permission (id, name, description, resource, action), and ApprovalWorkflow (id, requesterId, approverId, status, requestData, createdAt, approvedAt) models. Include proper foreign key relationships and indexes for optimal query performance.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Extend existing User model with team relationships",
+            "description": "Update User model to support team memberships, role assignments, and multi-account access patterns required for agency functionality",
+            "dependencies": [
+              "6.1"
+            ],
+            "details": "Add team-related fields to User model including default role, team memberships relation, and agency-specific metadata. Create migration scripts to update existing user records. Implement user context switching for multi-account access and maintain backward compatibility with existing authentication flows.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Implement role-based access control middleware",
+            "description": "Build RBAC middleware system to enforce permissions across API endpoints and UI components based on user roles and team memberships",
+            "dependencies": [
+              "6.1",
+              "6.2"
+            ],
+            "details": "Create middleware functions for route protection based on user permissions. Implement permission checking utilities for Admin, Editor, and Viewer roles. Add resource-level access control for campaigns, accounts, and team management features. Include permission caching for performance optimization.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Build team invitation and user management system",
+            "description": "Create complete user invitation workflow including email invitations, team member management interface, and role assignment capabilities",
+            "dependencies": [
+              "6.2",
+              "6.3"
+            ],
+            "details": "Implement invitation email system with secure tokens, team member invitation UI with role selection, user acceptance flow, and team management dashboard. Include features for role updates, member removal, and invitation resending. Add audit logging for all team management actions.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 5,
+            "title": "Create approval workflow system with client notifications",
+            "description": "Implement client approval system for campaign changes with notification system and approval tracking interface",
+            "dependencies": [
+              "6.1",
+              "6.4"
+            ],
+            "details": "Build approval request creation for campaign modifications, client notification system via email, approval tracking dashboard, and automated implementation upon approval. Include approval history, rejection handling with feedback, and configurable approval requirements based on change magnitude and account settings.",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "title": "Build Ad Copy Performance Tracker",
+        "description": "Create ad creative analysis system with AI-generated suggestions and performance comparison",
+        "details": "Develop ad performance tracker that analyzes ad variations with side-by-side comparisons, performance metrics per ad (impressions, CTR, conversion rate), and AI-generated ad copy suggestions. Implement headlines and descriptions performance breakdown with recommendations to pause underperforming ads. Create Ad, AdVariation, and AdPerformance models. Integrate with Google Ads API to fetch ad-level data and implement automated ad testing workflows.",
+        "testStrategy": "Test ad performance calculations, validate AI suggestion quality, test ad variation comparison logic, and verify automated ad management functionality",
+        "priority": "medium",
+        "dependencies": [
+          1
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create Ad, AdVariation, and AdPerformance models",
+            "description": "Design and implement database models for storing ad creative data, variations, and performance metrics",
+            "dependencies": [],
+            "details": "Create Ad model with fields for ad copy, headlines, descriptions, and creative assets. Implement AdVariation model to track different versions of ads with A/B testing capabilities. Design AdPerformance model to store metrics like impressions, clicks, CTR, conversion rate, and cost data. Include relationships between models and proper indexing for performance queries.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Extend Google Ads API service for ad-level data",
+            "description": "Enhance existing Google Ads API integration to fetch detailed ad performance data",
+            "dependencies": [
+              "7.1"
+            ],
+            "details": "Extend the Google Ads API service to retrieve ad-level performance data including creative elements, performance metrics, and historical data. Implement data synchronization for ads, ad variations, and performance metrics. Add error handling and rate limiting for API calls. Include data validation and transformation logic to match our model structure.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Implement ad performance analysis and comparison logic",
+            "description": "Build analytics engine to analyze ad performance and enable side-by-side comparisons",
+            "dependencies": [
+              "7.2"
+            ],
+            "details": "Create performance analysis algorithms that calculate statistical significance between ad variations. Implement side-by-side comparison functionality with performance metrics breakdown. Build logic to identify underperforming ads and generate pause recommendations. Include performance trending analysis and anomaly detection for ad creative performance.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Build AI-powered ad copy suggestion system",
+            "description": "Develop AI system that generates ad copy suggestions based on performance data and best practices",
+            "dependencies": [
+              "7.3"
+            ],
+            "details": "Integrate with existing AI capabilities from task 1 to generate ad copy suggestions. Implement algorithms that analyze high-performing ad elements and suggest improvements for underperforming ads. Create suggestion categories for headlines, descriptions, and calls-to-action. Include confidence scoring for suggestions and A/B testing recommendations for new creative variations.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 5,
+            "title": "Create frontend interface for ad management and performance visualization",
+            "description": "Build user interface for ad performance tracking, comparison, and management",
+            "dependencies": [
+              "7.4"
+            ],
+            "details": "Create responsive frontend interface using existing UI components for ad performance dashboard. Implement side-by-side ad comparison views with performance metrics visualization using Recharts. Build ad management interface with pause/resume controls and AI suggestion display. Include filtering and search functionality for ads, and implement one-click actions for AI recommendations.",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "title": "Implement Real-time Alerts and Notification System",
+        "description": "Build proactive alert system with configurable thresholds and multi-channel notifications",
+        "details": "Create comprehensive alert system for budget exhaustion, significant CPA increases, campaign status changes, and low quality scores. Implement configurable alert thresholds, email notifications using existing infrastructure, in-app notification center, and mobile push notifications. Create Alert, AlertRule, and NotificationPreference models. Build real-time monitoring that checks campaign performance every 15 minutes and triggers alerts based on user-defined criteria.",
+        "testStrategy": "Test alert threshold calculations, validate email notification delivery, test real-time monitoring accuracy, and verify alert escalation logic",
+        "priority": "medium",
+        "dependencies": [],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create Alert, AlertRule, and NotificationPreference Models",
+            "description": "Design and implement database models for the alert system with proper relationships and validation",
+            "dependencies": [],
+            "details": "Create Alert model with fields for alert type, severity, message, timestamp, and status. Implement AlertRule model with configurable thresholds for budget exhaustion, CPA increases, campaign status changes, and quality scores. Design NotificationPreference model to store user preferences for notification channels (email, in-app, push) and frequency settings. Include proper database migrations and model relationships.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Implement Real-time Monitoring System",
+            "description": "Build background service that monitors campaign performance every 15 minutes and evaluates alert conditions",
+            "dependencies": [
+              "8.1"
+            ],
+            "details": "Create a scheduled background job that runs every 15 minutes to fetch campaign performance data and evaluate against user-defined alert rules. Implement threshold checking logic for budget exhaustion, significant CPA increases, campaign status changes, and low quality scores. Include proper error handling, logging, and ensure the monitoring system can scale with multiple campaigns and users.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Build Multi-channel Notification System",
+            "description": "Implement email, in-app, and mobile push notification delivery system",
+            "dependencies": [
+              "8.1"
+            ],
+            "details": "Build notification delivery system that supports multiple channels. Integrate with existing email infrastructure for email notifications, create in-app notification storage and display system, and implement mobile push notification capability. Include notification templating, delivery status tracking, and respect user notification preferences. Ensure proper error handling and retry logic for failed deliveries.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Create Frontend Interface for Alert Configuration",
+            "description": "Build user interface for alert rule management and notification center",
+            "dependencies": [
+              "8.1",
+              "8.2",
+              "8.3"
+            ],
+            "details": "Create frontend components for users to configure alert rules with customizable thresholds and notification preferences. Implement an in-app notification center to display recent alerts and their status. Include alert rule management interface with options to create, edit, delete, and toggle alert rules. Build notification history view and provide options for users to manage their notification preferences across all channels.",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
+      },
+      {
+        "id": 9,
+        "title": "Develop Bid Strategy Optimizer",
+        "description": "Build intelligent bidding strategy analysis and optimization tool",
+        "details": "Create bid strategy analyzer that evaluates current bidding strategy effectiveness and recommends optimal strategies (manual CPC, target CPA, maximize conversions). Implement historical performance comparison of different bidding strategies and gradual bid adjustment suggestions for manual CPC campaigns. Create BidStrategy and BidAdjustment models. Integrate with Google Ads API to implement bidding strategy changes and monitor performance impact.",
+        "testStrategy": "Test bidding strategy performance analysis, validate strategy change recommendations, test gradual bid adjustment algorithms, and verify API integration for bid management",
+        "priority": "low",
+        "dependencies": [
+          1,
+          3
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create BidStrategy and BidAdjustment Models",
+            "description": "Design and implement database models for storing bid strategy configurations and adjustment history",
+            "dependencies": [],
+            "details": "Create BidStrategy model with fields for strategy type (manual CPC, target CPA, maximize conversions), current settings, performance metrics, and account associations. Create BidAdjustment model to track historical bid changes with timestamps, old/new values, reasoning, and performance impact. Include proper relationships and indexes for efficient querying.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Implement Bid Strategy Analysis Algorithms",
+            "description": "Build core algorithms to evaluate current bidding strategy effectiveness and recommend optimal strategies",
+            "dependencies": [
+              "9.1"
+            ],
+            "details": "Develop algorithms to analyze current bid strategy performance using conversion rates, cost per acquisition, and ROI metrics. Create strategy comparison logic that evaluates manual CPC vs automated bidding performance. Implement recommendation engine that suggests optimal bidding strategies based on account goals, budget, and historical performance patterns.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Build Historical Performance Comparison System",
+            "description": "Create system to compare performance across different bidding strategies over time",
+            "dependencies": [
+              "9.1",
+              "9.2"
+            ],
+            "details": "Implement historical data aggregation for different bid strategy periods. Create comparative analysis tools that show performance metrics before/after strategy changes. Build visualization components using existing Recharts library to display strategy performance trends and comparisons. Include statistical significance testing for strategy performance differences.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Create Gradual Bid Adjustment Engine",
+            "description": "Develop intelligent system for making incremental bid adjustments for manual CPC campaigns",
+            "dependencies": [
+              "9.1",
+              "9.2"
+            ],
+            "details": "Build bid adjustment algorithm that makes gradual changes based on keyword performance data. Implement safety mechanisms to prevent dramatic bid changes that could impact account performance. Create adjustment scheduling system that spreads changes over time. Include bid adjustment suggestions with reasoning and expected impact predictions.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 5,
+            "title": "Integrate Google Ads API for Bid Strategy Management",
+            "description": "Implement API integration to execute bid strategy changes and monitor performance impact",
+            "dependencies": [
+              "9.2",
+              "9.4"
+            ],
+            "details": "Integrate with Google Ads API to implement automated bidding strategy changes based on recommendations. Build monitoring system to track performance impact after strategy changes. Implement rollback functionality in case of negative performance impact. Create API error handling and retry logic for reliable bid management operations. Include audit trail for all API-executed changes.",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
+      },
+      {
+        "id": 10,
+        "title": "Implement Token Refresh and Enhanced Authentication",
+        "description": "Complete OAuth token refresh implementation and enhance security features",
+        "details": "Complete the TODO in src/lib/auth.ts by implementing Google OAuth token refresh logic to handle expired access tokens automatically. Add session management improvements, implement proper token rotation, and enhance security with better error handling. Add audit logging for authentication events and implement session timeout handling. Update existing Session model with refresh token expiration tracking and add proper cleanup of expired sessions.",
+        "testStrategy": "Test token refresh flow with expired tokens, validate session cleanup processes, test authentication error handling, and verify audit logging functionality",
+        "priority": "high",
+        "dependencies": [],
+        "status": "in-progress",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Complete OAuth Token Refresh Implementation",
+            "description": "Implement Google OAuth token refresh logic in src/lib/auth.ts to handle expired access tokens automatically",
+            "dependencies": [],
+            "details": "Complete the existing TODO in src/lib/auth.ts by implementing the token refresh flow using Google OAuth2 refresh tokens. Add proper error handling for refresh failures, implement token rotation logic, and ensure seamless user experience when tokens expire. Include validation of refresh token expiration and proper fallback to re-authentication when refresh tokens are invalid.\n<info added on 2025-10-13T11:27:34.163Z>\n**IMPLEMENTATION COMPLETED:**\n\nSuccessfully implemented complete OAuth token refresh functionality in src/lib/auth.ts (lines 120-193). Key achievements:\n\n- Created refreshAccessToken() function that properly calls Google OAuth2 token endpoint with refresh_token grant type\n- Implemented comprehensive error handling for all refresh failure scenarios including invalid_grant errors  \n- Added automatic session cleanup when refresh tokens become invalid or expired\n- Implemented token rotation logic that updates both access and refresh tokens when Google provides new refresh token\n- Enhanced getUserFromToken() with automatic token expiration detection and seamless refresh capability\n- Ensured zero-interruption user experience - users remain authenticated through token refresh process\n- Added proper validation for refresh token expiration timestamps\n- Implemented robust fallback mechanism that triggers re-authentication only when refresh tokens are completely invalid\n- Included proper error logging and cleanup throughout the refresh flow\n\nThe implementation is production-ready with comprehensive error handling, automatic cleanup processes, and maintains seamless user authentication experience. All TODO items in the authentication system have been resolved.\n</info added on 2025-10-13T11:27:34.163Z>",
+            "status": "done",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Enhance Session Management with Cleanup and Timeout Handling",
+            "description": "Implement comprehensive session management improvements including proper cleanup of expired sessions and timeout handling",
+            "dependencies": [
+              "10.1"
+            ],
+            "details": "Update the existing Session model to include refresh token expiration tracking fields. Implement automated cleanup processes for expired sessions, add session timeout handling with configurable timeouts, and create background jobs for session maintenance. Ensure proper session invalidation on logout and implement session renewal mechanisms to maintain active user sessions.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Implement Audit Logging and Security Enhancements",
+            "description": "Add comprehensive audit logging for authentication events and implement additional security improvements with session tracking",
+            "dependencies": [
+              "10.2"
+            ],
+            "details": "Create audit logging system that tracks all authentication events including login attempts, token refreshes, session timeouts, and security violations. Implement session tracking with IP address monitoring, device fingerprinting, and suspicious activity detection. Add proper error handling and logging for all authentication failures, implement rate limiting for authentication attempts, and create alerts for security anomalies.",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
+      }
+    ],
+    "metadata": {
+      "created": "2025-10-13T11:13:17.422Z",
+      "updated": "2025-10-13T11:46:51.303Z",
+      "description": "Tasks for master context"
+    }
+  }
+}

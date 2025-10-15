@@ -59,6 +59,7 @@ export default function DashboardPage() {
         endDate,
       });
 
+      console.log('[Dashboard] Fetching campaigns for accountId:', accountId);
       const response = await fetch(`/api/campaigns?${params}`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -66,15 +67,22 @@ export default function DashboardPage() {
       });
 
       const result = await response.json();
+      console.log('[Dashboard] API Response:', result);
 
       if (!response.ok || !result.success) {
-        throw new Error(result.error || 'Failed to fetch dashboard data');
+        const errorMessage = result.error || 'Failed to fetch dashboard data';
+        console.error('[Dashboard] API Error:', errorMessage);
+        console.error('[Dashboard] Response status:', response.status);
+        console.error('[Dashboard] Full response:', result);
+        throw new Error(errorMessage);
       }
 
+      console.log('[Dashboard] Successfully loaded data');
       setData(result.data);
-    } catch (err) {
-      console.error('Error fetching dashboard data:', err);
-      setError('Failed to load dashboard data. Please try again.');
+    } catch (err: any) {
+      console.error('[Dashboard] Error fetching dashboard data:', err);
+      console.error('[Dashboard] Error message:', err.message);
+      setError(err.message || 'Failed to load dashboard data. Please try again.');
     } finally {
       setIsLoading(false);
     }

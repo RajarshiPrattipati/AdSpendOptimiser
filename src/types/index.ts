@@ -14,6 +14,8 @@ export interface AdAccount {
   currency: string;
   timezone?: string | null;
   isActive: boolean;
+  isManagerAccount: boolean;
+  managerAccountId?: string | null;
   lastSyncedAt?: Date | null;
 }
 
@@ -74,6 +76,7 @@ export interface AuthSession {
   userId: string;
   email: string;
   accessToken: string;
+  refreshToken: string;
 }
 
 // API Response types

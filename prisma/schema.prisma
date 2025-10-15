@@ -11,16 +11,16 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  name          String?
-  googleId      String?   @unique
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  googleId  String?  @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  accounts      AdAccount[]
-  sessions      Session[]
+  accounts AdAccount[]
+  sessions Session[]
 
   @@map("users")
 }
@@ -35,72 +35,223 @@ model Session {
   updatedAt    DateTime @updatedAt
 
   // Relations
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("sessions")
 }
 
 model AdAccount {
-  id                String    @id @default(cuid())
-  userId            String
-  customerId        String    // Google Ads customer ID
-  accountName       String
-  currency          String    @default("USD")
-  timezone          String?
-  isActive          Boolean   @default(true)
-  lastSyncedAt      DateTime?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  id               String    @id @default(cuid())
+  userId           String
+  customerId       String // Google Ads customer ID
+  accountName      String
+  currency         String    @default("USD")
+  timezone         String?
+  isActive         Boolean   @default(true)
+  isManagerAccount Boolean   @default(false) // True for MCC/manager accounts
+  managerAccountId String? // ID of the parent manager account if this is a client account
+  lastSyncedAt     DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   // Relations
-  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  campaigns         Campaign[]
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  campaigns       Campaign[]
+  recommendations Recommendation[]
 
   @@unique([userId, customerId])
+  @@index([managerAccountId])
   @@map("ad_accounts")
 }
 
 model Campaign {
-  id                String    @id @default(cuid())
-  adAccountId       String
-  campaignId        String    // Google Ads campaign ID
-  campaignName      String
-  status            String    // ENABLED, PAUSED, REMOVED
-  biddingStrategy   String?
-  budget            Float?
-  targetCpa         Float?
-  targetRoas        Float?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  id              String   @id @default(cuid())
+  adAccountId     String
+  campaignId      String // Google Ads campaign ID
+  campaignName    String
+  status          String // ENABLED, PAUSED, REMOVED
+  biddingStrategy String?
+  budget          Float?
+  targetCpa       Float?
+  targetRoas      Float?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   // Relations
-  adAccount         AdAccount @relation(fields: [adAccountId], references: [id], onDelete: Cascade)
-  metrics           CampaignMetrics[]
+  adAccount       AdAccount         @relation(fields: [adAccountId], references: [id], onDelete: Cascade)
+  metrics         CampaignMetrics[]
+  recommendations Recommendation[]
+  keywords        Keyword[]
+  searchTerms     SearchTerm[]
 
   @@unique([adAccountId, campaignId])
   @@map("campaigns")
 }
 
 model CampaignMetrics {
-  id                String    @id @default(cuid())
+  id                String   @id @default(cuid())
   campaignId        String
-  date              DateTime  @db.Date
-  impressions       Int       @default(0)
-  clicks            Int       @default(0)
-  cost              Float     @default(0)
-  conversions       Float     @default(0)
-  conversionValue   Float     @default(0)
-  ctr               Float     @default(0)  // Click-through rate
-  averageCpc        Float     @default(0)  // Average cost per click
-  costPerConversion Float     @default(0)  // CPA
-  roas              Float     @default(0)  // Return on ad spend
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  date              DateTime @db.Date
+  impressions       Int      @default(0)
+  clicks            Int      @default(0)
+  cost              Float    @default(0)
+  conversions       Float    @default(0)
+  conversionValue   Float    @default(0)
+  ctr               Float    @default(0) // Click-through rate
+  averageCpc        Float    @default(0) // Average cost per click
+  costPerConversion Float    @default(0) // CPA
+  roas              Float    @default(0) // Return on ad spend
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   // Relations
-  campaign          Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
 
   @@unique([campaignId, date])
   @@index([campaignId, date])
   @@map("campaign_metrics")
+}
+
+enum RecommendationType {
+  BUDGET_REALLOCATION
+  KEYWORD_OPTIMIZATION
+  BID_ADJUSTMENT
+  AD_CREATIVE
+  PAUSE_CAMPAIGN
+  PAUSE_KEYWORD
+  ADD_NEGATIVE_KEYWORD
+  BIDDING_STRATEGY_CHANGE
+}
+
+enum RecommendationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  IMPLEMENTED
+  DISMISSED
+}
+
+model Recommendation {
+  id          String  @id @default(cuid())
+  adAccountId String
+  campaignId  String? // Optional - some recommendations are account-level
+  keywordId   String? // Optional - for keyword-specific recommendations
+  adId        String? // Optional - for ad-specific recommendations
+
+  type   RecommendationType
+  status RecommendationStatus @default(PENDING)
+
+  title       String // Short title for the recommendation
+  description String @db.Text // Detailed explanation
+  reasoning   String @db.Text // Why this recommendation is made
+
+  // Impact estimation
+  expectedImpact  String? // e.g., "15% CPA reduction"
+  impactMetric    String? // e.g., "CPA", "ROAS", "CTR"
+  impactValue     Float? // Numeric value of expected impact
+  confidenceScore Float   @default(0) // 0-1 confidence in recommendation
+
+  // Suggested changes (stored as JSON)
+  suggestedChanges Json // Flexible field for storing change details
+
+  // Implementation tracking
+  implementedAt DateTime?
+  implementedBy String?
+  rollbackData  Json? // Data needed to rollback if needed
+
+  // Priority and scheduling
+  priority   String    @default("medium") // low, medium, high, critical
+  validUntil DateTime? // Recommendations can expire
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  adAccount AdAccount @relation(fields: [adAccountId], references: [id], onDelete: Cascade)
+  campaign  Campaign? @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([adAccountId, status])
+  @@index([campaignId])
+  @@index([type, status])
+  @@index([priority, createdAt])
+  @@map("recommendations")
+}
+
+// Add these models to schema.prisma after the Recommendation model
+
+enum KeywordMatchType {
+  EXACT
+  PHRASE
+  BROAD
+  BROAD_MATCH_MODIFIER
+}
+
+model Keyword {
+  id          String           @id @default(cuid())
+  campaignId  String
+  keywordId   String // Google Ads keyword ID
+  keywordText String
+  matchType   KeywordMatchType
+  status      String // ENABLED, PAUSED, REMOVED
+
+  // Performance metrics (latest/aggregated)
+  impressions Int   @default(0)
+  clicks      Int   @default(0)
+  cost        Float @default(0)
+  conversions Float @default(0)
+  ctr         Float @default(0)
+  cpc         Float @default(0)
+  cpa         Float @default(0)
+
+  // Quality Score
+  qualityScore Int? // 1-10
+
+  lastSyncedAt DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // Relations
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, keywordId])
+  @@index([campaignId, status])
+  @@index([cpa])
+  @@index([conversions])
+  @@map("keywords")
+}
+
+model SearchTerm {
+  id             String  @id @default(cuid())
+  campaignId     String
+  searchTerm     String // The actual search query
+  matchedKeyword String? // Which keyword matched
+  matchType      String? // How it matched
+
+  // Performance metrics
+  impressions    Int   @default(0)
+  clicks         Int   @default(0)
+  cost           Float @default(0)
+  conversions    Float @default(0)
+  ctr            Float @default(0)
+  cpc            Float @default(0)
+  cpa            Float @default(0)
+  conversionRate Float @default(0)
+
+  // Analysis flags
+  isNegative       Boolean @default(false) // Flagged as negative keyword candidate
+  priority         String? // high, medium, low for negative keyword priority
+  estimatedSavings Float? // Estimated cost savings if negated
+
+  date      DateTime @db.Date
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, searchTerm, date])
+  @@index([campaignId, date])
+  @@index([isNegative, priority])
+  @@index([conversions])
+  @@map("search_terms")
 }
