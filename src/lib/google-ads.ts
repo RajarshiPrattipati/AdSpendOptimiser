@@ -79,15 +79,28 @@ export class GoogleAdsService {
   }
 
   /**
+   * Format customer ID by removing dashes and ensuring it's in the correct format
+   * Google Ads API requires customer IDs without dashes (e.g., "1234567890" not "123-456-7890")
+   */
+  private formatCustomerId(customerId: string): string {
+    return customerId.replace(/[^0-9]/g, '');
+  }
+
+  /**
    * Get customer instance with current refresh token
    * @param customerId - The customer ID to query
    * @param loginCustomerId - Optional manager account ID for accessing client accounts
    */
   private getCustomer(customerId: string, loginCustomerId?: string): Customer {
+    const formattedCustomerId = this.formatCustomerId(customerId);
+    const formattedLoginCustomerId = loginCustomerId ? this.formatCustomerId(loginCustomerId) : undefined;
+
+    console.log(`[GoogleAdsService] Creating customer instance: customerId=${formattedCustomerId}, loginCustomerId=${formattedLoginCustomerId}`);
+
     return this.client.Customer({
-      customer_id: customerId,
+      customer_id: formattedCustomerId,
       refresh_token: this.refreshToken,
-      login_customer_id: loginCustomerId,
+      login_customer_id: formattedLoginCustomerId,
     });
   }
 
@@ -299,34 +312,40 @@ export class GoogleAdsService {
    */
   async getCampaigns(customerId: string, loginCustomerId?: string): Promise<CampaignData[]> {
     try {
+      console.log(`[GoogleAdsService] Fetching campaigns for customer: ${customerId}, loginCustomerId: ${loginCustomerId}`);
       const customer = this.getCustomer(customerId, loginCustomerId);
 
+      // Simplified query without budget to avoid JOIN issues
       const query = `
         SELECT
           campaign.id,
           campaign.name,
           campaign.status,
-          campaign.bidding_strategy_type,
-          campaign_budget.amount_micros
+          campaign.bidding_strategy_type
         FROM campaign
         WHERE campaign.status != 'REMOVED'
         ORDER BY campaign.name
       `;
 
+      console.log(`[GoogleAdsService] Running query:`, query);
       const results = await customer.query(query);
+      console.log(`[GoogleAdsService] Found ${results.length} campaigns`);
+
+      if (results.length > 0) {
+        console.log(`[GoogleAdsService] Sample campaign:`, JSON.stringify(results[0], null, 2));
+      }
 
       return results.map((row: any) => ({
         campaignId: row.campaign.id?.toString() || '',
         campaignName: row.campaign.name || '',
         status: row.campaign.status || 'UNKNOWN',
         biddingStrategy: row.campaign.bidding_strategy_type || 'UNKNOWN',
-        budget: row.campaign_budget?.amount_micros
-          ? row.campaign_budget.amount_micros / 1000000
-          : 0,
+        budget: 0, // We'll fetch budgets separately if needed
       }));
-    } catch (error) {
-      console.error(`Error fetching campaigns for customer ${customerId}:`, error);
-      throw new Error('Failed to fetch campaigns');
+    } catch (error: any) {
+      console.error(`[GoogleAdsService] Error fetching campaigns for customer ${customerId}:`, error);
+      console.error(`[GoogleAdsService] Error details:`, error.message, error.stack);
+      throw new Error(`Failed to fetch campaigns: ${error.message}`);
     }
   }
 
@@ -344,6 +363,7 @@ export class GoogleAdsService {
     loginCustomerId?: string
   ): Promise<CampaignMetricsData[]> {
     try {
+      console.log(`[GoogleAdsService] Fetching campaign metrics for customer: ${customerId}, dates: ${startDate} to ${endDate}`);
       const customer = this.getCustomer(customerId, loginCustomerId);
 
       const query = `
@@ -361,7 +381,13 @@ export class GoogleAdsService {
         ORDER BY segments.date DESC
       `;
 
+      console.log(`[GoogleAdsService] Running metrics query`);
       const results = await customer.query(query);
+      console.log(`[GoogleAdsService] Found ${results.length} metric rows`);
+
+      if (results.length > 0) {
+        console.log(`[GoogleAdsService] Sample metrics:`, JSON.stringify(results[0], null, 2));
+      }
 
       return results.map((row: any) => ({
         campaignId: row.campaign.id?.toString() || '',
@@ -372,9 +398,10 @@ export class GoogleAdsService {
         conversions: row.metrics.conversions || 0,
         conversionValue: row.metrics.conversions_value || 0,
       }));
-    } catch (error) {
-      console.error(`Error fetching campaign metrics for customer ${customerId}:`, error);
-      throw new Error('Failed to fetch campaign metrics');
+    } catch (error: any) {
+      console.error(`[GoogleAdsService] Error fetching campaign metrics for customer ${customerId}:`, error);
+      console.error(`[GoogleAdsService] Error details:`, error.message, error.stack);
+      throw new Error(`Failed to fetch campaign metrics: ${error.message}`);
     }
   }
 
