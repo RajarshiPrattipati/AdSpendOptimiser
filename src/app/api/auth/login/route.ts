@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { google } from 'googleapis';
 
-const oauth2Client = new google.auth.OAuth2(
-  process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET,
-  process.env.GOOGLE_REDIRECT_URI
-);
+export const dynamic = 'force-dynamic';
 
 /**
  * GET /api/auth/login
@@ -13,6 +9,19 @@ const oauth2Client = new google.auth.OAuth2(
  */
 export async function GET(request: NextRequest) {
   try {
+    // Construct redirect URI dynamically based on current host
+    const origin = request.nextUrl.origin;
+    const redirectUri = `${origin}/api/auth/callback`;
+
+    console.log('[Login] Using redirect URI:', redirectUri);
+
+    // Create OAuth2 client with dynamic redirect URI
+    const oauth2Client = new google.auth.OAuth2(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET,
+      redirectUri
+    );
+
     // Generate the url that will be used for authorization
     const authorizeUrl = oauth2Client.generateAuthUrl({
       access_type: 'offline',
