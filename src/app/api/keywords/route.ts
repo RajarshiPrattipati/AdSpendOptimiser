@@ -42,19 +42,65 @@ export async function GET(request: NextRequest) {
       where: { id: accountId },
     });
 
-    if (!account || account.userId !== session.userId) {
+    if (!account) {
+      return NextResponse.json(
+        { success: false, error: 'Account not found' },
+        { status: 404 }
+      );
+    }
+
+    // Check if this is a test account
+    const isTestAccount = ['1234567890', '9876543210'].includes(account.customerId);
+
+    // For real accounts, verify ownership
+    if (!isTestAccount && account.userId !== session.userId) {
       return NextResponse.json(
         { success: false, error: 'Account not found or unauthorized' },
         { status: 404 }
       );
     }
 
-    // Fetch keywords from Google Ads
-    const googleAdsService = new GoogleAdsService(session.accessToken, session.refreshToken);
-    const keywords = await googleAdsService.getKeywords(
-      account.customerId,
-      campaignId
-    );
+    let keywords: any[];
+
+    // Fetch keywords from database for test accounts, Google Ads for real accounts
+    if (isTestAccount) {
+      console.log('[API /keywords] Test account detected, fetching from database...');
+
+      // Fetch keywords from database
+      const dbKeywords = await prisma.keyword.findMany({
+        where: {
+          campaign: {
+            adAccountId: accountId,
+            campaignId: campaignId,
+          },
+        },
+      });
+
+      // Format to match Google Ads API response
+      keywords = dbKeywords.map((kw) => ({
+        keywordId: kw.keywordId,
+        keywordText: kw.keywordText,
+        matchType: kw.matchType,
+        status: kw.status,
+        impressions: kw.impressions,
+        clicks: kw.clicks,
+        cost: kw.cost,
+        conversions: kw.conversions,
+        ctr: kw.ctr,
+        cpc: kw.cpc,
+        cpa: kw.cpa,
+        qualityScore: kw.qualityScore || undefined,
+      }));
+
+      console.log('[API /keywords] Found', keywords.length, 'test keywords');
+    } else {
+      // Fetch keywords from Google Ads
+      const googleAdsService = new GoogleAdsService(session.accessToken, session.refreshToken);
+      keywords = await googleAdsService.getKeywords(
+        account.customerId,
+        campaignId
+      );
+    }
 
     // Prepare account goals for analysis
     const accountGoals = {

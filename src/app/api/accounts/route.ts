@@ -23,49 +23,142 @@ export async function GET(request: NextRequest) {
 
     console.log('[API /accounts] Session found for user:', session.userId);
 
-    // Fetch accessible accounts from Google Ads API
-    console.log('[API /accounts] Initializing GoogleAdsService...');
-    const googleAdsService = new GoogleAdsService(session.accessToken, session.refreshToken);
-    console.log('[API /accounts] Fetching accessible accounts...');
-    const accounts = await googleAdsService.getAccessibleAccounts();
-    console.log('[API /accounts] Found', accounts.length, 'accounts');
+    // Try to fetch accessible accounts from Google Ads API
+    // This may fail if the developer token is restricted to test accounts only
+    let accounts: any[] = [];
+    let allAccountsToShow: any[] = [];
+    let linkedAccounts: any[] = [];
+    let googleAdsCallSucceeded = false;
 
-    // Check which accounts are already linked (including client accounts)
-    const linkedAccounts = await prisma.adAccount.findMany({
+    try {
+      console.log('[API /accounts] Initializing GoogleAdsService...');
+      const googleAdsService = new GoogleAdsService(session.accessToken, session.refreshToken);
+      console.log('[API /accounts] Fetching accessible accounts...');
+      accounts = await googleAdsService.getAccessibleAccounts();
+      console.log('[API /accounts] Found', accounts.length, 'accounts');
+      googleAdsCallSucceeded = true;
+
+      // Check which accounts are already linked (including client accounts)
+      linkedAccounts = await prisma.adAccount.findMany({
+        where: {
+          userId: session.userId,
+        },
+        select: {
+          id: true,
+          customerId: true,
+          accountName: true,
+          isManagerAccount: true,
+          managerAccountId: true,
+          currency: true,
+          timezone: true,
+        },
+      });
+
+      const linkedCustomerIds = new Set(linkedAccounts.map((a: any) => a.customerId));
+
+      // For each manager account in the accessible accounts, fetch their client accounts
+      allAccountsToShow = [...accounts];
+
+      for (const account of accounts) {
+        if (account.isManagerAccount) {
+          try {
+            const clientAccounts = await googleAdsService.getClientAccounts(account.customerId);
+            allAccountsToShow.push(...clientAccounts);
+          } catch (error) {
+            console.error(`[API /accounts] Error fetching client accounts for ${account.customerId}:`, error);
+          }
+        }
+      }
+    } catch (error: any) {
+      console.log('[API /accounts] Failed to fetch Google Ads accounts:', error.message);
+      console.log('[API /accounts] This may be because the developer token is restricted to test accounts only');
+      console.log('[API /accounts] Continuing with test accounts only...');
+
+      // Check if there are any linked accounts in the database for this user
+      linkedAccounts = await prisma.adAccount.findMany({
+        where: {
+          userId: session.userId,
+        },
+        select: {
+          id: true,
+          customerId: true,
+          accountName: true,
+          isManagerAccount: true,
+          managerAccountId: true,
+          currency: true,
+          timezone: true,
+        },
+      });
+    }
+
+    // Fetch test accounts (available to all users)
+    // Test accounts have specific customer IDs: 1234567890 (manager) and 9876543210 (client)
+    const testAccounts = await prisma.adAccount.findMany({
       where: {
-        userId: session.userId,
+        customerId: {
+          in: ['1234567890', '9876543210'],
+        },
       },
       select: {
+        id: true,
         customerId: true,
+        accountName: true,
+        currency: true,
+        timezone: true,
         isManagerAccount: true,
         managerAccountId: true,
       },
     });
 
-    const linkedCustomerIds = new Set(linkedAccounts.map((a) => a.customerId));
+    console.log('[API /accounts] Found', testAccounts.length, 'test accounts');
 
-    // For each manager account in the accessible accounts, fetch their client accounts
-    const allAccountsToShow = [...accounts];
+    // Add test accounts to the list with isLinked: true and isTestAccount: true
+    const testAccountsFormatted = testAccounts.map((account) => ({
+      id: account.id,
+      customerId: account.customerId,
+      accountName: account.accountName,
+      currency: account.currency,
+      timezone: account.timezone || 'America/New_York',
+      isManagerAccount: account.isManagerAccount,
+      isLinked: true, // Test accounts are always considered "linked" for all users
+      isTestAccount: true, // Flag to identify test accounts
+    }));
 
-    for (const account of accounts) {
-      if (account.isManagerAccount) {
-        try {
-          const clientAccounts = await googleAdsService.getClientAccounts(account.customerId);
-          allAccountsToShow.push(...clientAccounts);
-        } catch (error) {
-          console.error(`[API /accounts] Error fetching client accounts for ${account.customerId}:`, error);
-        }
-      }
+    // Add database IDs to linked accounts from Google Ads (only if Google Ads call succeeded)
+    let accountsWithStatus: any[] = [];
+    if (googleAdsCallSucceeded) {
+      const linkedCustomerIds = new Set(linkedAccounts.map((a: any) => a.customerId));
+      accountsWithStatus = allAccountsToShow.map((account) => {
+        const linkedAccount = linkedAccounts.find((la: any) => la.customerId === account.customerId);
+        return {
+          id: linkedAccount?.id, // Include database ID if linked
+          ...account,
+          isLinked: linkedCustomerIds.has(account.customerId),
+          isTestAccount: false,
+        };
+      });
+    } else {
+      // If Google Ads call failed, just return linked accounts from database
+      accountsWithStatus = linkedAccounts
+        .filter((acc: any) => !['1234567890', '9876543210'].includes(acc.customerId)) // Exclude test accounts
+        .map((acc: any) => ({
+          id: acc.id,
+          customerId: acc.customerId,
+          accountName: acc.accountName,
+          currency: acc.currency,
+          timezone: acc.timezone || 'America/New_York',
+          isManagerAccount: acc.isManagerAccount,
+          isLinked: true,
+          isTestAccount: false,
+        }));
     }
 
-    const accountsWithStatus = allAccountsToShow.map((account) => ({
-      ...account,
-      isLinked: linkedCustomerIds.has(account.customerId),
-    }));
+    // Combine both lists (test accounts + Google Ads accounts)
+    const combinedAccounts = [...testAccountsFormatted, ...accountsWithStatus];
 
     return NextResponse.json({
       success: true,
-      data: accountsWithStatus,
+      data: combinedAccounts,
     });
   } catch (error: any) {
     console.error('[API /accounts] Error fetching accounts:', error);

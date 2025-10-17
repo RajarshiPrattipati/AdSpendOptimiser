@@ -548,4 +548,245 @@ export class GoogleAdsService {
       averageCpc: totals.clicks > 0 ? totals.cost / totals.clicks : 0,
     };
   }
+
+  // ========== WRITE OPERATIONS FOR RECOMMENDATION IMPLEMENTATION ==========
+
+  /**
+   * Update campaign budget
+   * @param customerId - The customer ID
+   * @param campaignId - The campaign ID to update
+   * @param newBudgetMicros - New budget amount in micros (e.g., $100 = 100000000)
+   * @returns Updated campaign budget resource name
+   */
+  async updateCampaignBudget(
+    customerId: string,
+    campaignId: string,
+    newBudgetMicros: number
+  ): Promise<string> {
+    try {
+      console.log(`[GoogleAdsService] Updating budget for campaign ${campaignId} to ${newBudgetMicros} micros`);
+
+      const customer = this.getCustomer(customerId);
+
+      // First, get the campaign budget ID
+      const campaignQuery = `
+        SELECT campaign.id, campaign.campaign_budget
+        FROM campaign
+        WHERE campaign.id = ${campaignId}
+        LIMIT 1
+      `;
+
+      const campaignResults = await customer.query(campaignQuery);
+      if (!campaignResults || campaignResults.length === 0) {
+        throw new Error(`Campaign ${campaignId} not found`);
+      }
+
+      if (!campaignResults[0]?.campaign?.campaign_budget) {
+        throw new Error('Campaign budget not found');
+      }
+
+      const budgetResourceName = campaignResults[0].campaign.campaign_budget;
+
+      // Update the campaign budget
+      const operation = {
+        resource_name: budgetResourceName,
+        amount_micros: newBudgetMicros,
+      };
+
+      await customer.campaignBudgets.update([operation]);
+
+      console.log(`[GoogleAdsService] Successfully updated budget for campaign ${campaignId}`);
+      return budgetResourceName;
+    } catch (error: any) {
+      console.error(`[GoogleAdsService] Error updating campaign budget:`, error);
+      throw new Error(`Failed to update campaign budget: ${error.message}`);
+    }
+  }
+
+  /**
+   * Update campaign status (ENABLED, PAUSED)
+   * @param customerId - The customer ID
+   * @param campaignId - The campaign ID to update
+   * @param status - New status ('ENABLED' or 'PAUSED')
+   */
+  async updateCampaignStatus(
+    customerId: string,
+    campaignId: string,
+    status: 'ENABLED' | 'PAUSED'
+  ): Promise<void> {
+    try {
+      console.log(`[GoogleAdsService] Updating campaign ${campaignId} status to ${status}`);
+
+      const customer = this.getCustomer(customerId);
+      const formattedCustomerId = this.formatCustomerId(customerId);
+
+      const operation = {
+        resource_name: `customers/${formattedCustomerId}/campaigns/${campaignId}`,
+        status,
+      };
+
+      await customer.campaigns.update([operation]);
+
+      console.log(`[GoogleAdsService] Successfully updated campaign ${campaignId} status to ${status}`);
+    } catch (error: any) {
+      console.error(`[GoogleAdsService] Error updating campaign status:`, error);
+      throw new Error(`Failed to update campaign status: ${error.message}`);
+    }
+  }
+
+  /**
+   * Update keyword status (ENABLED, PAUSED)
+   * @param customerId - The customer ID
+   * @param adGroupId - The ad group ID
+   * @param criterionId - The keyword criterion ID
+   * @param status - New status ('ENABLED' or 'PAUSED')
+   */
+  async updateKeywordStatus(
+    customerId: string,
+    adGroupId: string,
+    criterionId: string,
+    status: 'ENABLED' | 'PAUSED'
+  ): Promise<void> {
+    try {
+      console.log(`[GoogleAdsService] Updating keyword ${criterionId} status to ${status}`);
+
+      const customer = this.getCustomer(customerId);
+      const formattedCustomerId = this.formatCustomerId(customerId);
+
+      const operation = {
+        resource_name: `customers/${formattedCustomerId}/adGroupCriteria/${adGroupId}~${criterionId}`,
+        status,
+      };
+
+      await customer.adGroupCriteria.update([operation]);
+
+      console.log(`[GoogleAdsService] Successfully updated keyword ${criterionId} status to ${status}`);
+    } catch (error: any) {
+      console.error(`[GoogleAdsService] Error updating keyword status:`, error);
+      throw new Error(`Failed to update keyword status: ${error.message}`);
+    }
+  }
+
+  /**
+   * Update keyword bid
+   * @param customerId - The customer ID
+   * @param adGroupId - The ad group ID
+   * @param criterionId - The keyword criterion ID
+   * @param bidMicros - New bid amount in micros
+   */
+  async updateKeywordBid(
+    customerId: string,
+    adGroupId: string,
+    criterionId: string,
+    bidMicros: number
+  ): Promise<void> {
+    try {
+      console.log(`[GoogleAdsService] Updating keyword ${criterionId} bid to ${bidMicros} micros`);
+
+      const customer = this.getCustomer(customerId);
+      const formattedCustomerId = this.formatCustomerId(customerId);
+
+      const operation = {
+        resource_name: `customers/${formattedCustomerId}/adGroupCriteria/${adGroupId}~${criterionId}`,
+        cpc_bid_micros: bidMicros,
+      };
+
+      await customer.adGroupCriteria.update([operation]);
+
+      console.log(`[GoogleAdsService] Successfully updated keyword ${criterionId} bid`);
+    } catch (error: any) {
+      console.error(`[GoogleAdsService] Error updating keyword bid:`, error);
+      throw new Error(`Failed to update keyword bid: ${error.message}`);
+    }
+  }
+
+  /**
+   * Add negative keywords to a campaign
+   * @param customerId - The customer ID
+   * @param campaignId - The campaign ID
+   * @param keywords - Array of negative keyword texts
+   * @param matchType - Match type for negative keywords (default: EXACT)
+   */
+  async addNegativeKeywords(
+    customerId: string,
+    campaignId: string,
+    keywords: string[],
+    matchType: 'EXACT' | 'PHRASE' | 'BROAD' = 'EXACT'
+  ): Promise<string[]> {
+    try {
+      console.log(`[GoogleAdsService] Adding ${keywords.length} negative keywords to campaign ${campaignId}`);
+
+      const customer = this.getCustomer(customerId);
+      const formattedCustomerId = this.formatCustomerId(customerId);
+
+      const operations = keywords.map((keyword) => ({
+        campaign: `customers/${formattedCustomerId}/campaigns/${campaignId}`,
+        keyword: {
+          text: keyword,
+          match_type: matchType,
+        },
+        negative: true,
+      }));
+
+      const response = await customer.campaignCriteria.create(operations);
+
+      console.log(`[GoogleAdsService] Successfully added ${keywords.length} negative keywords`);
+      return response.results?.map((r: any) => r.resource_name) || [];
+    } catch (error: any) {
+      console.error(`[GoogleAdsService] Error adding negative keywords:`, error);
+      throw new Error(`Failed to add negative keywords: ${error.message}`);
+    }
+  }
+
+  /**
+   * Update campaign bidding strategy
+   * @param customerId - The customer ID
+   * @param campaignId - The campaign ID
+   * @param biddingStrategyType - New bidding strategy type
+   * @param targetCpaMicros - Target CPA in micros (for TARGET_CPA strategy)
+   * @param targetRoas - Target ROAS (for TARGET_ROAS strategy)
+   */
+  async updateBiddingStrategy(
+    customerId: string,
+    campaignId: string,
+    biddingStrategyType: string,
+    targetCpaMicros?: number,
+    targetRoas?: number
+  ): Promise<void> {
+    try {
+      console.log(`[GoogleAdsService] Updating campaign ${campaignId} bidding strategy to ${biddingStrategyType}`);
+
+      const customer = this.getCustomer(customerId);
+      const formattedCustomerId = this.formatCustomerId(customerId);
+
+      const updateFields: any = {
+        resource_name: `customers/${formattedCustomerId}/campaigns/${campaignId}`,
+        bidding_strategy_type: biddingStrategyType,
+      };
+
+      const paths = ['bidding_strategy_type'];
+
+      // Add strategy-specific settings
+      if (biddingStrategyType === 'TARGET_CPA' && targetCpaMicros) {
+        updateFields.target_cpa = { target_cpa_micros: targetCpaMicros };
+        paths.push('target_cpa.target_cpa_micros');
+      } else if (biddingStrategyType === 'TARGET_ROAS' && targetRoas) {
+        updateFields.target_roas = { target_roas: targetRoas };
+        paths.push('target_roas.target_roas');
+      } else if (biddingStrategyType === 'MAXIMIZE_CONVERSIONS') {
+        updateFields.maximize_conversions = {};
+        paths.push('maximize_conversions');
+      } else if (biddingStrategyType === 'MAXIMIZE_CONVERSION_VALUE') {
+        updateFields.maximize_conversion_value = {};
+        paths.push('maximize_conversion_value');
+      }
+
+      await customer.campaigns.update([updateFields]);
+
+      console.log(`[GoogleAdsService] Successfully updated campaign ${campaignId} bidding strategy`);
+    } catch (error: any) {
+      console.error(`[GoogleAdsService] Error updating bidding strategy:`, error);
+      throw new Error(`Failed to update bidding strategy: ${error.message}`);
+    }
+  }
 }

@@ -20,25 +20,72 @@ model User {
   updatedAt DateTime @updatedAt
 
   // Relations
-  accounts AdAccount[]
-  sessions Session[]
+  accounts  AdAccount[]
+  sessions  Session[]
+  auditLogs AuditLog[]
 
   @@map("users")
 }
 
 model Session {
-  id           String   @id @default(cuid())
-  userId       String
-  accessToken  String   @db.Text
-  refreshToken String?  @db.Text
-  expiresAt    DateTime
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                    String    @id @default(cuid())
+  userId                String
+  accessToken           String    @db.Text
+  refreshToken          String?   @db.Text
+  expiresAt             DateTime // Access token expiration
+  refreshTokenExpiresAt DateTime? // Refresh token expiration (typically 60 days from issue)
+  lastActivityAt        DateTime  @default(now()) // For session timeout tracking
+  ipAddress             String? // IP address of the session
+  userAgent             String?   @db.Text // Browser/device user agent
+  deviceFingerprint     String? // Device fingerprint for suspicious activity detection
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
   // Relations
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId, lastActivityAt])
+  @@index([expiresAt])
+  @@index([refreshTokenExpiresAt])
+  @@index([ipAddress])
   @@map("sessions")
+}
+
+enum AuditEventType {
+  LOGIN_SUCCESS
+  LOGIN_FAILED
+  LOGOUT
+  TOKEN_REFRESH_SUCCESS
+  TOKEN_REFRESH_FAILED
+  SESSION_TIMEOUT
+  SESSION_EXPIRED
+  PASSWORD_CHANGE
+  ACCOUNT_LOCKED
+  SUSPICIOUS_ACTIVITY
+  RATE_LIMIT_EXCEEDED
+  UNAUTHORIZED_ACCESS
+}
+
+model AuditLog {
+  id          String         @id @default(cuid())
+  userId      String? // Nullable for failed login attempts
+  eventType   AuditEventType
+  ipAddress   String?
+  userAgent   String?        @db.Text
+  deviceInfo  String?        @db.Text
+  metadata    Json? // Additional event-specific data
+  severity    String         @default("info") // info, warning, error, critical
+  message     String         @db.Text
+  timestamp   DateTime       @default(now())
+
+  // Relations
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId, timestamp])
+  @@index([eventType, timestamp])
+  @@index([severity, timestamp])
+  @@index([ipAddress, timestamp])
+  @@map("audit_logs")
 }
 
 model AdAccount {

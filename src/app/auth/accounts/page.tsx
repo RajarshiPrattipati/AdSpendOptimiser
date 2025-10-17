@@ -6,12 +6,14 @@ import { useRouter, useSearchParams } from 'next/navigation';
 export const dynamic = 'force-dynamic';
 
 interface AdAccount {
+  id?: string;
   customerId: string;
   accountName: string;
   currency: string;
   timezone: string;
   isLinked: boolean;
   isManagerAccount: boolean;
+  isTestAccount?: boolean;
   canManageClients?: boolean;
 }
 
@@ -143,9 +145,17 @@ function AccountsPageContent() {
         throw new Error(data.error || 'Failed to link accounts');
       }
 
-      // Redirect to dashboard with the first selected account
-      const firstAccountId = data.data[0].id;
-      router.push(`/dashboard?accountId=${firstAccountId}`);
+      // Redirect to dashboard with the first selected account's database ID
+      // Find a client account (non-manager) if available, as managers can't view campaigns
+      const clientAccounts = data.data.filter((acc: any) => !acc.isManagerAccount);
+      const firstAccount = clientAccounts.length > 0 ? clientAccounts[0] : data.data[0];
+
+      if (!firstAccount?.id) {
+        console.error('No valid account ID found in response:', data.data);
+        throw new Error('Failed to get account ID. Please try again.');
+      }
+
+      router.push(`/dashboard?accountId=${firstAccount.id}`);
     } catch (err) {
       console.error('Error linking accounts:', err);
       setError('Failed to link accounts. Please try again.');
@@ -234,6 +244,11 @@ function AccountsPageContent() {
                                 <span className="text-xs bg-purple-200 text-purple-800 px-2 py-1 rounded font-semibold">
                                   MANAGER ACCOUNT
                                 </span>
+                                {group.manager.isTestAccount && (
+                                  <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded font-semibold">
+                                    TEST DATA
+                                  </span>
+                                )}
                               </div>
                               <p className="text-sm text-gray-600 mt-1">
                                 Customer ID: {group.manager.customerId}
@@ -304,6 +319,11 @@ function AccountsPageContent() {
                                     <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
                                       Client Account
                                     </span>
+                                    {account.isTestAccount && (
+                                      <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded font-semibold">
+                                        TEST DATA
+                                      </span>
+                                    )}
                                   </div>
                                   <p className="text-sm text-gray-600 mt-1">
                                     Customer ID: {account.customerId}

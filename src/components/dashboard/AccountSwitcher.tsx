@@ -7,6 +7,7 @@ interface AdAccount {
   id: string;
   accountName: string;
   customerId: string;
+  isTestAccount?: boolean;
 }
 
 interface AccountSwitcherProps {
@@ -65,9 +66,16 @@ export default function AccountSwitcher({
         className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
       >
         <div className="text-left">
-          <p className="text-sm font-medium text-gray-900">
-            {currentAccount?.accountName || 'Select Account'}
-          </p>
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-medium text-gray-900">
+              {currentAccount?.accountName || 'Select Account'}
+            </p>
+            {currentAccount?.isTestAccount && (
+              <span className="text-xs bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded font-semibold">
+                TEST
+              </span>
+            )}
+          </div>
           {currentAccount && (
             <p className="text-xs text-gray-500">{currentAccount.customerId}</p>
           )}
@@ -98,9 +106,16 @@ export default function AccountSwitcher({
                     account.id === currentAccountId ? 'bg-blue-50' : ''
                   }`}
                 >
-                  <p className="text-sm font-medium text-gray-900">
-                    {account.accountName}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium text-gray-900">
+                      {account.accountName}
+                    </p>
+                    {account.isTestAccount && (
+                      <span className="text-xs bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded font-semibold">
+                        TEST
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs text-gray-500 mt-1">
                     {account.customerId}
                   </p>

@@ -34,11 +34,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Verify user owns this account
+    // Verify user owns this account OR it's a test account
     const adAccount = await prisma.adAccount.findFirst({
       where: {
         id: accountId,
-        userId: session.userId,
       },
     });
 
@@ -47,6 +46,117 @@ export async function GET(request: NextRequest) {
         { success: false, error: 'Account not found' },
         { status: 404 }
       );
+    }
+
+    // Check if this is a test account (customer IDs: 1234567890 or 9876543210)
+    const isTestAccount = ['1234567890', '9876543210'].includes(adAccount.customerId);
+
+    // For test accounts, verify the account exists (no ownership check since they're shared)
+    // For real accounts, verify user owns the account
+    if (!isTestAccount && adAccount.userId !== session.userId) {
+      return NextResponse.json(
+        { success: false, error: 'Account not found' },
+        { status: 404 }
+      );
+    }
+
+    // If this is a test account, fetch data from database instead of Google Ads API
+    if (isTestAccount) {
+      console.log('[API /campaigns] Test account detected, fetching from database...');
+
+      // Fetch campaigns from database
+      const campaigns = await prisma.campaign.findMany({
+        where: {
+          adAccountId: accountId,
+        },
+        include: {
+          metrics: {
+            where: {
+              date: {
+                gte: new Date(startDate),
+                lte: new Date(endDate),
+              },
+            },
+            orderBy: {
+              date: 'asc',
+            },
+          },
+        },
+      });
+
+      console.log('[API /campaigns] Found', campaigns.length, 'test campaigns');
+
+      // Format campaigns with metrics
+      const campaignsWithMetrics = campaigns.map((campaign) => {
+        const metrics = campaign.metrics;
+
+        const totals = metrics.reduce(
+          (acc, m) => ({
+            cost: acc.cost + m.cost,
+            conversions: acc.conversions + m.conversions,
+            conversionValue: acc.conversionValue + (m.conversionValue || 0),
+            clicks: acc.clicks + m.clicks,
+            impressions: acc.impressions + m.impressions,
+          }),
+          { cost: 0, conversions: 0, conversionValue: 0, clicks: 0, impressions: 0 }
+        );
+
+        return {
+          campaignId: campaign.campaignId,
+          campaignName: campaign.campaignName,
+          status: campaign.status,
+          biddingStrategy: campaign.biddingStrategy,
+          budget: campaign.budget,
+          totalSpend: totals.cost,
+          totalConversions: totals.conversions,
+          totalClicks: totals.clicks,
+          totalImpressions: totals.impressions,
+          averageCpa: totals.conversions > 0 ? totals.cost / totals.conversions : 0,
+          averageRoas: totals.cost > 0 ? totals.conversionValue / totals.cost : 0,
+          averageCtr: totals.impressions > 0 ? (totals.clicks / totals.impressions) * 100 : 0,
+          metrics: metrics.map((m) => ({
+            date: m.date.toISOString().split('T')[0],
+            impressions: m.impressions,
+            clicks: m.clicks,
+            cost: m.cost,
+            conversions: m.conversions,
+            conversionValue: m.conversionValue || 0,
+            ctr: m.impressions > 0 ? (m.clicks / m.impressions) * 100 : 0,
+            averageCpc: m.clicks > 0 ? m.cost / m.clicks : 0,
+            costPerConversion: m.conversions > 0 ? m.cost / m.conversions : 0,
+            roas: m.cost > 0 ? (m.conversionValue || 0) / m.cost : 0,
+          })),
+        };
+      });
+
+      // Calculate overall summary from all metrics
+      const allMetrics = campaigns.flatMap((c) => c.metrics);
+      const summary = {
+        totalSpend: allMetrics.reduce((sum, m) => sum + m.cost, 0),
+        totalConversions: allMetrics.reduce((sum, m) => sum + m.conversions, 0),
+        totalClicks: allMetrics.reduce((sum, m) => sum + m.clicks, 0),
+        totalImpressions: allMetrics.reduce((sum, m) => sum + m.impressions, 0),
+        averageCpa: 0,
+        averageRoas: 0,
+        averageCtr: 0,
+      };
+
+      const totalConversionValue = allMetrics.reduce((sum, m) => sum + (m.conversionValue || 0), 0);
+      summary.averageCpa = summary.totalConversions > 0 ? summary.totalSpend / summary.totalConversions : 0;
+      summary.averageRoas = summary.totalSpend > 0 ? totalConversionValue / summary.totalSpend : 0;
+      summary.averageCtr = summary.totalImpressions > 0 ? (summary.totalClicks / summary.totalImpressions) * 100 : 0;
+
+      return NextResponse.json({
+        success: true,
+        data: {
+          campaigns: campaignsWithMetrics,
+          summary,
+          dateRange: {
+            startDate,
+            endDate,
+          },
+        },
+      });
     }
 
     const googleAdsService = new GoogleAdsService(session.accessToken, session.refreshToken);

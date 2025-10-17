@@ -1,6 +1,9 @@
 import jwt from 'jsonwebtoken';
 import { prisma } from './prisma';
 import type { AuthSession } from '@/types';
+import { SessionManager, SESSION_CONFIG } from './session-manager';
+import { AuditLogger } from './audit-logger';
+import { RateLimiter } from './rate-limiter';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
@@ -65,6 +68,13 @@ export async function getUserFromToken(authHeader: string | null): Promise<AuthS
     return null;
   }
 
+  // Validate session and check for timeouts
+  const isValid = await SessionManager.validateAndUpdateSession(session.id);
+  if (!isValid) {
+    console.log('Session expired or timed out');
+    return null;
+  }
+
   // Check if access token is expired and refresh if needed
   let accessToken = session.accessToken;
   if (session.expiresAt <= new Date() && session.refreshToken) {
@@ -92,9 +102,18 @@ export async function storeOAuthSession(
   userId: string,
   accessToken: string,
   refreshToken: string | null,
-  expiresIn: number // seconds
+  expiresIn: number, // seconds
+  ipAddress?: string,
+  userAgent?: string,
+  deviceFingerprint?: string
 ) {
   const expiresAt = new Date(Date.now() + expiresIn * 1000);
+  const now = new Date();
+
+  // Calculate refresh token expiration (typically 60 days)
+  const refreshTokenExpiresAt = refreshToken
+    ? new Date(now.getTime() + SESSION_CONFIG.REFRESH_TOKEN_EXPIRY_MS)
+    : null;
 
   return prisma.session.create({
     data: {
@@ -102,6 +121,11 @@ export async function storeOAuthSession(
       accessToken,
       refreshToken,
       expiresAt,
+      refreshTokenExpiresAt,
+      lastActivityAt: now,
+      ipAddress,
+      userAgent,
+      deviceFingerprint,
     },
   });
 }
@@ -186,20 +210,30 @@ export async function refreshAccessToken(sessionId: string): Promise<string | nu
 
     const tokens = await response.json();
 
-    // Update session with new access token and expiration
-    const expiresAt = new Date(Date.now() + tokens.expires_in * 1000);
+    // Check rate limit for token refresh
+    if (session.userId) {
+      const allowed = await RateLimiter.checkTokenRefreshLimit(session.userId);
+      if (!allowed) {
+        console.warn('[Auth] Token refresh rate limit exceeded');
+        await AuditLogger.logRateLimitExceeded(session.userId, 'token-refresh');
+        return null;
+      }
+    }
 
-    const updatedSession = await prisma.session.update({
-      where: { id: sessionId },
-      data: {
-        accessToken: tokens.access_token,
-        expiresAt,
-        // Update refresh token if a new one is provided
-        ...(tokens.refresh_token && { refreshToken: tokens.refresh_token }),
-      },
-    });
+    // Update session with new tokens using SessionManager
+    const success = await SessionManager.updateSessionTokens(
+      sessionId,
+      tokens.access_token,
+      tokens.expires_in,
+      tokens.refresh_token
+    );
 
-    return updatedSession.accessToken;
+    // Log token refresh
+    if (session.userId) {
+      await AuditLogger.logTokenRefresh(session.userId, success);
+    }
+
+    return success ? tokens.access_token : null;
   } catch (error) {
     console.error('Error refreshing token:', error);
     return null;

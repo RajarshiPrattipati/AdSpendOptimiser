@@ -146,6 +146,60 @@ function DashboardPageContent() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Feature Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {/* Recommendations Card */}
+          <button
+            onClick={() => router.push(`/recommendations?accountId=${accountId}`)}
+            className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-lg p-6 text-left hover:shadow-xl transition-shadow"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="bg-white bg-opacity-20 rounded-lg p-3">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <span className="text-white text-sm font-medium">View All →</span>
+            </div>
+            <h3 className="text-white text-xl font-bold mb-2">AI Recommendations</h3>
+            <p className="text-blue-100 text-sm">Get AI-powered optimization suggestions for your campaigns</p>
+          </button>
+
+          {/* Search Terms Card */}
+          <button
+            onClick={() => router.push(`/search-terms?accountId=${accountId}`)}
+            className="bg-gradient-to-br from-red-500 to-red-600 rounded-lg shadow-lg p-6 text-left hover:shadow-xl transition-shadow"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="bg-white bg-opacity-20 rounded-lg p-3">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <span className="text-white text-sm font-medium">Analyze →</span>
+            </div>
+            <h3 className="text-white text-xl font-bold mb-2">Search Term Analysis</h3>
+            <p className="text-red-100 text-sm">Find negative keyword opportunities to reduce wasted spend</p>
+          </button>
+
+          {/* Keywords Card */}
+          <button
+            onClick={() => router.push(`/keywords?accountId=${accountId}&campaignId=${data?.campaigns[0]?.campaignId || ''}`)}
+            className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-lg p-6 text-left hover:shadow-xl transition-shadow"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="bg-white bg-opacity-20 rounded-lg p-3">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+              </div>
+              <span className="text-white text-sm font-medium">Optimize →</span>
+            </div>
+            <h3 className="text-white text-xl font-bold mb-2">Keyword Performance</h3>
+            <p className="text-green-100 text-sm">Identify keywords to pause or scale based on performance</p>
+          </button>
+        </div>
+
         {/* Controls */}
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold text-gray-900">Campaign Performance</h2>
