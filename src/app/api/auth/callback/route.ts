@@ -4,18 +4,28 @@ import { findOrCreateUser, storeOAuthSession, generateToken } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
-const oauth2Client = new google.auth.OAuth2(
-  process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET,
-  process.env.GOOGLE_REDIRECT_URI
-);
-
 /**
  * GET /api/auth/callback
  * Handles OAuth callback from Google
  */
 export async function GET(request: NextRequest) {
   try {
+    // Log environment variables for debugging
+    console.log('=== OAuth Callback Debug ===');
+    console.log('GOOGLE_REDIRECT_URI:', process.env.GOOGLE_REDIRECT_URI);
+    console.log('GOOGLE_CLIENT_ID:', process.env.GOOGLE_CLIENT_ID ? 'Set' : 'Missing');
+    console.log('GOOGLE_CLIENT_SECRET:', process.env.GOOGLE_CLIENT_SECRET ? 'Set' : 'Missing');
+    console.log('DATABASE_URL:', process.env.DATABASE_URL ? 'Set' : 'Missing');
+    console.log('Request URL:', request.url);
+    console.log('Request Origin:', request.nextUrl.origin);
+
+    // Initialize OAuth client at runtime to ensure env vars are available
+    const oauth2Client = new google.auth.OAuth2(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET,
+      process.env.GOOGLE_REDIRECT_URI
+    );
+
     const searchParams = request.nextUrl.searchParams;
     const code = searchParams.get("code");
     const error = searchParams.get("error");
@@ -76,10 +86,23 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.redirect(redirectUrl.toString());
   } catch (error) {
+    // Enhanced error logging for debugging
     console.error("OAuth callback error:", error);
+    console.error("Error details:", {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID ? 'Set' : 'Missing',
+      GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET ? 'Set' : 'Missing',
+      GOOGLE_REDIRECT_URI: process.env.GOOGLE_REDIRECT_URI || 'Missing',
+      DATABASE_URL: process.env.DATABASE_URL ? 'Set' : 'Missing',
+    });
+
     const baseUrl2 = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
+
+    // Include error message in redirect for debugging (remove in production)
+    const errorMessage = error instanceof Error ? error.message : 'authentication_failed';
     return NextResponse.redirect(
-      `${baseUrl2}/auth/error?error=authentication_failed`
+      `${baseUrl2}/auth/error?error=${encodeURIComponent(errorMessage)}`
     );
   }
 }

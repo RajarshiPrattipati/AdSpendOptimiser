@@ -1,18 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { google } from 'googleapis';
 
-const oauth2Client = new google.auth.OAuth2(
-  process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET,
-  process.env.GOOGLE_REDIRECT_URI
-);
-
 /**
  * GET /api/auth/login
  * Redirects user to Google OAuth consent screen
  */
 export async function GET(request: NextRequest) {
   try {
+    // Initialize OAuth client at runtime to ensure env vars are available
+    const oauth2Client = new google.auth.OAuth2(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET,
+      process.env.GOOGLE_REDIRECT_URI
+    );
+
+    // Log for debugging (remove in production)
+    console.log('OAuth Redirect URI:', process.env.GOOGLE_REDIRECT_URI);
+
     // Generate the url that will be used for authorization
     const authorizeUrl = oauth2Client.generateAuthUrl({
       access_type: 'offline',
