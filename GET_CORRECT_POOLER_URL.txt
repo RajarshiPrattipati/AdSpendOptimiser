@@ -1,0 +1,73 @@
+HOW TO GET THE CORRECT SUPABASE POOLER URL
+============================================
+
+The "Tenant or user not found" error means the pooler connection string format
+might not match your Supabase project configuration.
+
+STEPS TO GET THE EXACT CORRECT URL:
+====================================
+
+1. Go to your Supabase Dashboard:
+   https://supabase.com/dashboard/project/otleprdqubsrygwedqsa
+
+2. Click on "Settings" (gear icon in the left sidebar)
+
+3. Click on "Database"
+
+4. Scroll down to find "Connection Pooling" section
+
+5. You should see a dropdown for "Mode" - select one of these:
+   - Transaction (recommended for serverless)
+   - Session (if transaction doesn't work)
+
+6. Copy the EXACT connection string shown
+   It should look like:
+   postgresql://postgres.[something]:[password]@[region].pooler.supabase.com:6543/postgres
+
+7. IMPORTANT: Check if the connection string has:
+   - Port 6543? (if yes, good)
+   - Username format: postgres.[project-ref] or postgres?
+   - Any special parameters at the end?
+
+8. Replace DATABASE_URL in Netlify with THE EXACT string from Supabase
+
+ALTERNATIVE: Use Direct Connection (Temporary Test)
+===================================================
+
+To verify if it's a pooler issue, try using the DIRECT connection temporarily:
+
+1. In Netlify, temporarily set DATABASE_URL to:
+   postgresql://postgres:btZnCjHCDqRfUNFF@db.otleprdqubsrygwedqsa.supabase.co:5432/postgres
+
+2. Deploy and test
+
+3. If this works, it confirms the pooler URL format is the issue
+
+4. Then go back to Supabase dashboard and copy the EXACT pooler string
+
+POSSIBLE ISSUES:
+================
+
+1. Supabase project might be paused (free tier auto-pauses after inactivity)
+   - Check if project shows "Paused" in dashboard
+   - If paused, unpause it
+
+2. Connection pooling might not be enabled
+   - In Supabase dashboard, ensure pooling is enabled
+   - Some regions might have different pooler hosts
+
+3. IPv6 vs IPv4 issue
+   - Netlify might need IPv4 connection
+   - Try adding ?sslmode=require to the connection string
+
+WHAT TO DO NEXT:
+================
+
+1. Go to Supabase dashboard
+2. Get the EXACT pooler connection string (copy-paste)
+3. Share it with me (blur the password)
+4. I'll verify if the format is correct
+
+OR
+
+Test with direct connection first to isolate the issue.

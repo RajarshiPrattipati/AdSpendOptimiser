@@ -1,0 +1,58 @@
+HOW TO FIND DATABASE CONNECTION STRING IN SUPABASE
+===================================================
+
+EXACT STEPS:
+============
+
+1. Go to: https://supabase.com/dashboard/project/otleprdqubsrygwedqsa
+
+2. In the LEFT SIDEBAR, look for a GEAR/COG icon ⚙️
+   - It should say "Project Settings" when you hover over it
+   - Click on it
+
+3. In the Settings menu, click "Database"
+   (Should be in the left menu under Project Settings)
+
+4. Scroll down on that page - you'll see sections:
+   - General
+   - Connection Info
+   - Connection string
+   - Connection pooling  ← THIS IS WHAT YOU NEED
+
+5. Under "Connection pooling" section:
+   - There's a dropdown for "Mode" (select "Transaction" or "Session")
+   - Below that, you'll see a connection string like:
+     postgresql://postgres.[something]:[password]@....pooler.supabase.com:6543/postgres
+
+   - There's usually an eye icon 👁️ to reveal the password
+   - Copy the entire string
+
+IF YOU DON'T SEE "CONNECTION POOLING" SECTION:
+==============================================
+
+Your Supabase project might be on an older version or free tier without pooling.
+
+In that case, look for "Connection string" section instead:
+- You'll see different options: URI, PSQL, etc.
+- Look for one that mentions "pooler" or port "6543"
+
+ALTERNATIVE - CHECK IF PROJECT IS OLD/FREE TIER:
+================================================
+
+If you don't have connection pooling at all:
+
+1. Check your Supabase plan (Settings → Subscription)
+2. If on old free tier, you might need to use direct connection only
+
+3. For now, use the DIRECT connection in Netlify:
+   DATABASE_URL=postgresql://postgres:btZnCjHCDqRfUNFF@db.otleprdqubsrygwedqsa.supabase.co:5432/postgres
+
+4. This will work but isn't optimal for serverless
+
+SCREENSHOT WHERE YOU ARE:
+========================
+
+If you're still stuck:
+1. Take a screenshot of what you see in Settings → Database
+2. Share it (blur any passwords/secrets)
+3. I'll tell you exactly where to look
