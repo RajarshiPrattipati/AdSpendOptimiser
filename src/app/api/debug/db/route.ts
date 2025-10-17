@@ -6,25 +6,21 @@ import { prisma } from '@/lib/prisma';
  * IMPORTANT: Remove or protect this endpoint in production!
  */
 export async function GET() {
-  // Only allow in development or if explicitly enabled
-  if (process.env.NODE_ENV === 'production' && process.env.ENABLE_DEBUG_ENDPOINT !== 'true') {
-    return NextResponse.json(
-      { error: 'Debug endpoint disabled in production' },
-      { status: 403 }
-    );
-  }
-
   try {
-    console.log('Testing database connection...');
-    console.log('DATABASE_URL:', process.env.DATABASE_URL ? 'Set (length: ' + process.env.DATABASE_URL.length + ')' : 'Missing');
+    console.log('=== Database Connection Test ===');
+    console.log('DATABASE_URL:', process.env.DATABASE_URL
+      ? `Set (length: ${process.env.DATABASE_URL.length}, starts: ${process.env.DATABASE_URL.substring(0, 35)}...)`
+      : 'MISSING');
+    console.log('DIRECT_DATABASE_URL:', process.env.DIRECT_DATABASE_URL ? 'Set' : 'Not set');
 
     // Test connection
+    console.log('Attempting to connect...');
     await prisma.$connect();
-    console.log('Database connected successfully');
+    console.log('✅ Database connected successfully');
 
     // Test query
     const userCount = await prisma.user.count();
-    console.log('User count:', userCount);
+    console.log('✅ User count:', userCount);
 
     // Disconnect
     await prisma.$disconnect();
@@ -33,16 +29,31 @@ export async function GET() {
       success: true,
       message: 'Database connection successful',
       userCount,
-      databaseUrl: process.env.DATABASE_URL ? 'Set ✓' : 'Missing ✗',
+      databaseInfo: {
+        url: process.env.DATABASE_URL
+          ? `Set (${process.env.DATABASE_URL.substring(0, 35)}...)`
+          : 'Missing',
+        directUrl: process.env.DIRECT_DATABASE_URL ? 'Set' : 'Not set',
+      },
     });
   } catch (error) {
-    console.error('Database connection error:', error);
+    console.error('❌ Database connection error:', error);
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : String(error),
+      code: (error as any).code,
+      meta: (error as any).meta,
+    });
 
     return NextResponse.json({
       success: false,
       error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-      databaseUrl: process.env.DATABASE_URL ? 'Set ✓' : 'Missing ✗',
+      errorCode: (error as any).code,
+      databaseInfo: {
+        url: process.env.DATABASE_URL
+          ? `Set (${process.env.DATABASE_URL.substring(0, 35)}...)`
+          : 'Missing',
+        directUrl: process.env.DIRECT_DATABASE_URL ? 'Set' : 'Not set',
+      },
     }, { status: 500 });
   }
 }

@@ -10,14 +10,20 @@ export const dynamic = "force-dynamic";
  */
 export async function GET(request: NextRequest) {
   try {
-    // Log environment variables for debugging
-    console.log('=== OAuth Callback Debug ===');
-    console.log('GOOGLE_REDIRECT_URI:', process.env.GOOGLE_REDIRECT_URI);
-    console.log('GOOGLE_CLIENT_ID:', process.env.GOOGLE_CLIENT_ID ? 'Set' : 'Missing');
-    console.log('GOOGLE_CLIENT_SECRET:', process.env.GOOGLE_CLIENT_SECRET ? 'Set' : 'Missing');
-    console.log('DATABASE_URL:', process.env.DATABASE_URL ? 'Set' : 'Missing');
+    // COMPREHENSIVE environment variable logging for debugging
+    console.log('=== OAuth Callback Environment Debug ===');
+    console.log('NODE_ENV:', process.env.NODE_ENV);
+    console.log('GOOGLE_CLIENT_ID:', process.env.GOOGLE_CLIENT_ID || 'MISSING');
+    console.log('GOOGLE_CLIENT_SECRET:', process.env.GOOGLE_CLIENT_SECRET ? `Set (${process.env.GOOGLE_CLIENT_SECRET.substring(0, 10)}...)` : 'MISSING');
+    console.log('GOOGLE_REDIRECT_URI:', process.env.GOOGLE_REDIRECT_URI || 'MISSING');
+    console.log('GOOGLE_ADS_DEVELOPER_TOKEN:', process.env.GOOGLE_ADS_DEVELOPER_TOKEN ? 'Set' : 'MISSING');
+    console.log('DATABASE_URL:', process.env.DATABASE_URL ? `Set (length: ${process.env.DATABASE_URL.length}, starts: ${process.env.DATABASE_URL.substring(0, 30)}...)` : 'MISSING');
+    console.log('DIRECT_DATABASE_URL:', process.env.DIRECT_DATABASE_URL ? 'Set' : 'Not set');
+    console.log('JWT_SECRET:', process.env.JWT_SECRET ? 'Set' : 'MISSING');
+    console.log('NEXT_PUBLIC_APP_URL:', process.env.NEXT_PUBLIC_APP_URL || 'MISSING');
     console.log('Request URL:', request.url);
     console.log('Request Origin:', request.nextUrl.origin);
+    console.log('All process.env keys:', Object.keys(process.env).filter(k => k.includes('GOOGLE') || k.includes('DATABASE') || k.includes('JWT') || k.includes('APP_URL')).join(', '));
 
     // Initialize OAuth client at runtime to ensure env vars are available
     const oauth2Client = new google.auth.OAuth2(
