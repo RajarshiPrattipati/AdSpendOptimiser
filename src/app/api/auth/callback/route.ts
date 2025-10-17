@@ -4,6 +4,12 @@ import { findOrCreateUser, storeOAuthSession, generateToken } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
+const oauth2Client = new google.auth.OAuth2(
+  process.env.GOOGLE_CLIENT_ID,
+  process.env.GOOGLE_CLIENT_SECRET,
+  process.env.GOOGLE_REDIRECT_URI
+);
+
 /**
  * GET /api/auth/callback
  * Handles OAuth callback from Google
@@ -14,19 +20,7 @@ export async function GET(request: NextRequest) {
     const code = searchParams.get("code");
     const error = searchParams.get("error");
 
-    const baseUrl = request.nextUrl.origin;
-
-    // Construct redirect URI dynamically based on current host
-    const redirectUri = `${baseUrl}/api/auth/callback`;
-
-    console.log('[Callback] Using redirect URI:', redirectUri);
-
-    // Create OAuth2 client with dynamic redirect URI
-    const oauth2Client = new google.auth.OAuth2(
-      process.env.GOOGLE_CLIENT_ID,
-      process.env.GOOGLE_CLIENT_SECRET,
-      redirectUri
-    );
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
 
     if (error) {
       return NextResponse.redirect(`${baseUrl}/auth/error?error=${error}`);
