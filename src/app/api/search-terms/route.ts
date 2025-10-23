@@ -98,7 +98,7 @@ export async function GET(request: NextRequest) {
         ctr: st.impressions > 0 ? (st.clicks / st.impressions) * 100 : 0,
         cpc: st.clicks > 0 ? st.cost / st.clicks : 0,
         cpa: st.conversions > 0 ? st.cost / st.conversions : 0,
-        conversionRate: st.impressions > 0 ? (st.conversions / st.impressions) * 100 : 0,
+        conversionRate: st.clicks > 0 ? (st.conversions / st.clicks) * 100 : 0,
         date: st.date.toISOString().split('T')[0],
       }));
 

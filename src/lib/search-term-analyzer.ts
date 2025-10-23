@@ -179,7 +179,7 @@ export class SearchTermAnalyzer {
     for (const term in aggregated) {
       const data = aggregated[term];
       data.cpa = data.conversions > 0 ? data.cost / data.conversions : 0;
-      data.conversionRate = data.impressions > 0 ? (data.conversions / data.impressions) * 100 : 0;
+      data.conversionRate = data.clicks > 0 ? (data.conversions / data.clicks) * 100 : 0;
     }
 
     return aggregated;

@@ -34,7 +34,8 @@ function parseDate(value: string | undefined): string | null {
 // Basic CSV parser that handles quoted fields and commas inside quotes
 function parseCsv(content: string): Row[] {
   const rows: Row[] = [];
-  const lines = content.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n').filter(l => l.length > 0);
+  const raw = content.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const lines = raw.split('\n').filter(l => l.length > 0);
   if (lines.length === 0) return rows;
 
   const parseLine = (line: string): string[] => {
@@ -61,11 +62,30 @@ function parseCsv(content: string): Row[] {
     return result.map(v => v.trim());
   };
 
-  const headerFields = parseLine(lines[0]).map(normalizeHeader);
-  for (let i = 1; i < lines.length; i++) {
+  const isLikelyHeader = (fields: string[]): boolean => {
+    const headers = fields.map(normalizeHeader);
+    const set = new Set(headers);
+    const hasSearchTerm = ['search_term', 'search_terms', 'search_query', 'query', 'term'].some(h => set.has(h));
+    const hasMetric = ['impressions', 'impr', 'interactions', 'clicks'].some(h => set.has(h));
+    return hasSearchTerm && hasMetric;
+  };
+
+  // Find the best header line within the first few lines (skip junk lines if present)
+  let headerIndex = 0;
+  const scanLimit = Math.min(lines.length, 5);
+  for (let i = 0; i < scanLimit; i++) {
     const fields = parseLine(lines[i]);
-    // Skip empty lines
-    if (fields.every(f => f.trim() === '')) continue;
+    if (fields.length > 1 && isLikelyHeader(fields)) {
+      headerIndex = i;
+      break;
+    }
+  }
+
+  const headerFields = parseLine(lines[headerIndex]).map(normalizeHeader);
+  for (let i = headerIndex + 1; i < lines.length; i++) {
+    const fields = parseLine(lines[i]);
+    // Skip empty or too-short lines
+    if (fields.length === 0 || fields.every(f => f.trim() === '')) continue;
     const row: Row = {};
     for (let j = 0; j < headerFields.length; j++) {
       row[headerFields[j]] = fields[j] ?? '';
@@ -80,22 +100,30 @@ function mapRowToSearchTerm(row: Row): SearchTermData | null {
   const searchTerm = row['search_term'] || row['search_terms'] || row['search_query'] || row['search_term__query'] || row['search_term__'] || row['search_term_(query)'] || row['search_term_(query)_'] || row['search_term_(query)'] || row['search_term_(search_query)'] || row['search_term_query'] || row['search_term'] || row['query'] || row['search'] || row['term'];
   const matchedKeyword = row['matched_keyword'] || row['keyword'] || row['keyword_text'] || row['keyword_(text)'];
   const matchType = row['match_type'] || row['matchtype'] || row['match_type_(excl._close_variants)'];
-  const impressions = parseNumber(row['impressions']);
-  const clicks = parseNumber(row['clicks']);
-  const costRaw = row['cost'] || row['cost_(usd)'] || row['cost_(micros)'] || row['cost_(converted)'] || row['cost__'];
+  // Impressions: support Google Ads export header "Impr."
+  const impressions = parseNumber(row['impressions'] || row['impr']);
+  // Clicks: support Google Ads export header "Interactions"
+  const clicks = parseNumber(row['clicks'] || row['interactions']);
+  const costRaw = row['cost'] || row['cost_usd'] || row['cost_micros'] || row['cost_converted'] || row['cost__'];
   let cost = parseNumber(costRaw);
   // If cost seems extremely high, it might be in micros
   if (cost > 100000) cost = cost / 1_000_000;
-  const conversions = parseNumber(row['conversions'] || row['all_conversions'] || row['conv.']);
+  const conversions = parseNumber(row['conversions'] || row['all_conversions'] || row['conv'] || row['conv_']);
   const dateStr = row['date'] || row['day'] || row['date_(yyyy-mm-dd)'];
   const date = parseDate(dateStr) || new Date().toISOString().split('T')[0];
 
   if (!searchTerm) return null;
 
-  const ctr = impressions > 0 ? (clicks / impressions) * 100 : 0;
-  const cpc = clicks > 0 ? cost / clicks : 0;
-  const cpa = conversions > 0 ? cost / conversions : 0;
-  const conversionRate = impressions > 0 ? (conversions / impressions) * 100 : 0;
+  // Prefer provided rate columns if present, else compute
+  const ctrSrc = row['ctr'] || row['click_through_rate'] || row['interaction_rate'];
+  const convRateSrc = row['conversion_rate'] || row['conv_rate'];
+  const cpcSrc = row['avg_cpc'] || row['average_cpc'] || row['avg_cost'];
+  const cpaSrc = row['cost_per_conversion'] || row['cost_conv'];
+
+  const ctr = ctrSrc !== undefined ? parseNumber(ctrSrc) : (impressions > 0 ? (clicks / impressions) * 100 : 0);
+  const cpc = cpcSrc !== undefined ? parseNumber(cpcSrc) : (clicks > 0 ? cost / clicks : 0);
+  const cpa = cpaSrc !== undefined ? parseNumber(cpaSrc) : (conversions > 0 ? cost / conversions : 0);
+  const conversionRate = convRateSrc !== undefined ? parseNumber(convRateSrc) : (impressions > 0 ? (conversions / impressions) * 100 : 0);
 
   return {
     searchTerm,
@@ -293,4 +321,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, error: 'Failed to process CSV' }, { status: 500 });
   }
 }
-

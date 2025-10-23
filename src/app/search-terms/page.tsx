@@ -43,6 +43,7 @@ interface SearchTermData {
     startDate: string;
     endDate: string;
   };
+  persisted?: number;
 }
 
 function SearchTermsPageContent() {
@@ -278,7 +279,7 @@ function SearchTermsPageContent() {
                 <p className="text-2xl font-bold text-gray-900">{data.summary.negativeKeywordCandidates}</p>
               </div>
               <div className="bg-green-50 rounded-lg p-4">
-                <p className="text-sm text-green-700">Estimated Monthly Savings</p>
+                <p className="text-sm text-green-700">Estimated Savings</p>
                 <p className="text-2xl font-bold text-green-600">
                   ${data.summary.estimatedSavings.toFixed(2)}
                 </p>
@@ -289,6 +290,11 @@ function SearchTermsPageContent() {
                   ${data.summary.savingsByPriority.high.toFixed(2)}
                 </p>
               </div>
+            </div>
+          )}
+          {typeof data?.persisted === 'number' && (
+            <div className="mt-3 text-sm text-green-700">
+              Ingested {data.persisted} row{data.persisted === 1 ? '' : 's'} from CSV.
             </div>
           )}
           {!data && (

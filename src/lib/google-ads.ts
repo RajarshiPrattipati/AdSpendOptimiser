@@ -512,7 +512,7 @@ export class GoogleAdsService {
           ctr: row.metrics?.ctr || 0,
           cpc: row.metrics?.average_cpc ? row.metrics.average_cpc / 1000000 : 0,
           cpa: conversions > 0 ? cost / conversions : 0,
-          conversionRate: impressions > 0 ? (conversions / impressions) * 100 : 0,
+          conversionRate: clicks > 0 ? (conversions / clicks) * 100 : 0,
           date: row.segments?.date || '',
         };
       });
