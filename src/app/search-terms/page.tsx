@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState, useRef, Suspense } from 'react';
+import type React from 'react';
 import { useSearchParams } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
@@ -52,6 +53,7 @@ function SearchTermsPageContent() {
   const [data, setData] = useState<SearchTermData | null>(null);
   const [selectedTerms, setSelectedTerms] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
+  const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'high' | 'medium' | 'low' | 'all'>('high');
   const [startDate, setStartDate] = useState(() => {
@@ -60,6 +62,7 @@ function SearchTermsPageContent() {
     return date.toISOString().split('T')[0];
   });
   const [endDate, setEndDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (accountId) {
@@ -106,6 +109,46 @@ function SearchTermsPageContent() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleUploadCsv = async (file: File) => {
+    try {
+      setIsUploading(true);
+      setError(null);
+
+      const token = localStorage.getItem('auth_token');
+      if (!token) throw new Error('Not authenticated');
+
+      const form = new FormData();
+      form.append('file', file);
+      form.append('accountId', accountId!);
+      if (campaignId) form.append('campaignId', campaignId);
+      form.append('persist', 'true');
+
+      const res = await fetch('/api/search-terms/upload', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || 'Upload failed');
+      }
+
+      setData(json.data);
+      setActiveTab('high');
+    } catch (e) {
+      console.error('Upload error', e);
+      setError((e as Error).message || 'Failed to upload CSV');
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const onChooseFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (f) handleUploadCsv(f);
   };
 
   const toggleTerm = (term: string) => {
@@ -174,8 +217,8 @@ function SearchTermsPageContent() {
             Identify negative keyword opportunities to reduce wasted ad spend
           </p>
 
-          {/* Date Range Selector */}
-          <div className="flex gap-4 mb-4">
+          {/* Actions: Date Range + CSV Upload */}
+          <div className="flex flex-col md:flex-row md:items-end gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Start Date
@@ -198,12 +241,27 @@ function SearchTermsPageContent() {
                 className="border border-gray-300 rounded-md px-3 py-2 text-sm"
               />
             </div>
-            <div className="flex items-end">
+            <div className="flex items-end gap-3">
               <button
                 onClick={fetchSearchTerms}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
               >
                 Update Report
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv,text/csv"
+                onChange={onChooseFile}
+                className="hidden"
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+                className={`px-4 py-2 rounded-md transition-colors text-sm font-medium border ${isUploading ? 'bg-gray-200 text-gray-500 border-gray-200' : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300'}`}
+                title="Upload a Search Terms CSV report to analyze and ingest"
+              >
+                {isUploading ? 'Uploading…' : 'Upload CSV'}
               </button>
             </div>
           </div>
@@ -231,6 +289,11 @@ function SearchTermsPageContent() {
                   ${data.summary.savingsByPriority.high.toFixed(2)}
                 </p>
               </div>
+            </div>
+          )}
+          {!data && (
+            <div className="text-sm text-gray-600 mt-2">
+              Tip: Upload a Google Ads Search Terms CSV to see instant recommendations.
             </div>
           )}
         </div>

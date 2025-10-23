@@ -30,6 +30,13 @@
 - ✅ Detailed metrics per search term
 - ✅ Date range filtering
 - ✅ Tab-based priority navigation
+- ✅ CSV upload and ingestion for Search Terms
+
+**CSV Upload**:
+- Endpoint: `POST /api/search-terms/upload`
+- UI: Upload button on the Search Terms page header
+- Accepts standard Google Ads Search Terms CSV columns (e.g., Search term, Impressions, Clicks, Cost, Conversions, Day). Cost in micros is auto-detected.
+- Optionally maps rows to campaigns via Campaign ID/Name in CSV or a `campaignId` query param (Google campaign ID). Rows are persisted when a campaign mapping is found.
 
 **Test Data**:
 - 4 HIGH priority terms → $611/month waste (0 conversions)
